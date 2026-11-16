@@ -213,6 +213,7 @@ function normalizeHeader(h) {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\./g, '')
     .trim();
 }
 
@@ -239,8 +240,8 @@ function looksLikeTimestamp(val) {
 function extractParticipantsFromRows(rows) {
   if (!rows || rows.length === 0) return [];
 
-  let dniCol = -1;
-  let nameCol = -1;
+  const dniCols = [];
+  const nameCols = [];
   let apellidoCol = -1;
   let timestampCol = -1;
   let startRow = 0;
@@ -267,57 +268,62 @@ function extractParticipantsFromRows(rows) {
       if (timestampCol === -1 && (h.includes('marca temporal') || h.includes('timestamp'))) {
         timestampCol = idx;
       } else if (
-        dniCol === -1 &&
         (h.includes('dni') ||
           h.includes('documento') ||
           h.includes('cedula') ||
-          h.includes('codigo') ||
-          h.includes('identidad'))
+          h.includes('identidad')) &&
+        !h.includes('celular') &&
+        !h.includes('telefono')
       ) {
-        dniCol = idx;
+        dniCols.push(idx);
       } else if (
-        nameCol === -1 &&
-        (h.includes('nombre') || h.includes('participante') || h.includes('asistente'))
+        (h.includes('nombre') || h.includes('participante') || h.includes('asistente')) &&
+        !h.includes('grupo') &&
+        !h.includes('equipo') &&
+        !h.includes('institucion')
       ) {
-        nameCol = idx;
+        nameCols.push(idx);
       } else if (apellidoCol === -1 && h.includes('apellido') && !h.includes('nombre')) {
         apellidoCol = idx;
       }
     });
   }
 
-  if (dniCol === -1 || nameCol === -1) {
-    const sampleRow = rows[startRow] || rows[0];
+  if (dniCols.length === 0 || nameCols.length === 0) {
+    const sampleRow =
+      rows.slice(startRow, startRow + 10).find((r) => r && r.some((c) => looksLikeDNI(c))) ||
+      rows[startRow] ||
+      rows[0];
     if (sampleRow) {
       sampleRow.forEach((cell, idx) => {
-        if (idx !== timestampCol && dniCol === -1 && looksLikeDNI(cell)) {
-          dniCol = idx;
+        if (idx !== timestampCol && dniCols.length === 0 && looksLikeDNI(cell)) {
+          dniCols.push(idx);
         }
       });
       sampleRow.forEach((cell, idx) => {
         if (
-          idx !== dniCol &&
+          !dniCols.includes(idx) &&
           idx !== timestampCol &&
-          nameCol === -1 &&
+          nameCols.length === 0 &&
           !looksLikeTimestamp(cell) &&
-          /[a-zA-ZáéíóúÁÉÍÓÚñÑ]{1,}/.test(cell)
+          /[a-zA-ZáéíóúÁÉÍÓÚñÑ]{2,}/.test(cell)
         ) {
-          nameCol = idx;
+          nameCols.push(idx);
         }
       });
     }
   }
 
-  if (dniCol === -1) dniCol = 0;
-  if (nameCol === -1) nameCol = dniCol === 0 ? 1 : 0;
+  if (dniCols.length === 0) dniCols.push(0);
+  if (nameCols.length === 0) nameCols.push(dniCols[0] === 0 ? 1 : 0);
 
   // Identificar todas las demás columnas/variables que vinieron del Google Forms
   const extraCols = [];
   if (hasHeader) {
     rawHeaders.forEach((colName, idx) => {
       if (
-        idx !== dniCol &&
-        idx !== nameCol &&
+        !dniCols.includes(idx) &&
+        !nameCols.includes(idx) &&
         idx !== apellidoCol &&
         idx !== timestampCol &&
         colName
@@ -332,8 +338,24 @@ function extractParticipantsFromRows(rows) {
     const r = rows[i];
     if (!r || r.length === 0) continue;
 
-    let rawDni = r[dniCol] || '';
-    let rawName = r[nameCol] || '';
+    // Tomar el primer DNI no vacío de las columnas de DNI detectadas
+    let rawDni = '';
+    for (const cIdx of dniCols) {
+      if (r[cIdx] && String(r[cIdx]).trim() !== '') {
+        rawDni = String(r[cIdx]).trim();
+        break;
+      }
+    }
+
+    // Tomar el primer Nombre no vacío de las columnas de Nombre detectadas (ej. Col D o Col F)
+    let rawName = '';
+    for (const cIdx of nameCols) {
+      if (r[cIdx] && String(r[cIdx]).trim() !== '') {
+        rawName = String(r[cIdx]).trim();
+        break;
+      }
+    }
+
     if (apellidoCol !== -1 && r[apellidoCol]) {
       rawName = `${rawName} ${r[apellidoCol]}`.trim();
     }
