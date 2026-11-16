@@ -1,3 +1,4 @@
+
 const path = require('node:path');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -30,7 +31,7 @@ try {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
-} catch (_) {}
+} catch (_) { }
 
 function hashPassword(pwd) {
   return crypto.createHash('sha256').update(String(pwd) + '_congreso_salt_v1').digest('hex');
@@ -51,7 +52,7 @@ const defaultConfigs = {
   nombre_evento: 'Congreso Académico - Control de Auditorio',
   subtitulo_evento: 'Registro Oficial de Asistencia y Acumulación de Horas',
   horas_meta_certificado: '10',
-  sheets_url: '',
+  sheets_url: 'https://docs.google.com/spreadsheets/d/1Hyxd3dC5cESDKQ39TIPYFYToI20PxA24JHd2ik2-ZDs/edit?usp=sharing',
   ultima_sincronizacion: '',
   columnas_forms: '[]',
   admin_user: defaultAdminUser,
@@ -83,13 +84,13 @@ function loadStoreFromDisk() {
         store.nextId = Number(raw.nextId) || store.sesiones.length + 1;
       }
     }
-  } catch (_) {}
+  } catch (_) { }
 }
 
 function saveStoreToDisk() {
   try {
     fs.writeFileSync(JSON_FILE, JSON.stringify(store), 'utf8');
-  } catch (_) {}
+  } catch (_) { }
 }
 
 loadStoreFromDisk();
@@ -102,7 +103,7 @@ try {
   sqliteDb = new DatabaseSync(dbPath);
   try {
     sqliteDb.exec('PRAGMA journal_mode = WAL;');
-  } catch (_) {}
+  } catch (_) { }
   sqliteDb.exec(`
     CREATE TABLE IF NOT EXISTS config (clave TEXT PRIMARY KEY, valor TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS participantes (
@@ -136,7 +137,7 @@ try {
       let extra = {};
       try {
         extra = typeof p.datos_extra === 'string' ? JSON.parse(p.datos_extra || '{}') : p.datos_extra || {};
-      } catch (_) {}
+      } catch (_) { }
       store.participantes[p.dni] = {
         dni: p.dni,
         nombres: p.nombres,
@@ -283,7 +284,7 @@ function importarParticipantes(lista, origen = 'FORMS') {
   try {
     const prevCols = JSON.parse(store.config.columnas_forms || '[]');
     for (const c of prevCols) colsExtraSet.add(c);
-  } catch (_) {}
+  } catch (_) { }
 
   for (const item of lista || []) {
     const dni = cleanDNI(item.dni);
@@ -730,7 +731,7 @@ function obtenerResumenGeneral() {
   let columnasForms = [];
   try {
     columnasForms = JSON.parse(config.columnas_forms || '[]');
-  } catch (_) {}
+  } catch (_) { }
 
   const fechasSet = new Set();
   for (const s of store.sesiones) fechasSet.add(s.fecha);
@@ -980,6 +981,17 @@ function limpiarTodo({ incluirParticipantes = true } = {}) {
   }
   saveStoreToDisk();
   return obtenerResumenGeneral();
+}
+
+// Al iniciar cualquier instancia (ej. en Vercel), cargar la base de inscritos del Google Forms si está vacía
+if (Object.keys(store.participantes).length === 0) {
+  try {
+    const semillaPath = path.join(__dirname, 'participantes_semilla.json');
+    if (fs.existsSync(semillaPath)) {
+      const semilla = JSON.parse(fs.readFileSync(semillaPath, 'utf8'));
+      importarParticipantes(semilla, 'FORMS');
+    }
+  } catch (_) {}
 }
 
 module.exports = {
