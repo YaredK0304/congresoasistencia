@@ -758,5 +758,37 @@
     "hora_salida": null,
     "minutos": 0,
     "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "74662829",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:28:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "73670070",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:27:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "61975137",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:27:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "70511339",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:27:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
   }
 ]
