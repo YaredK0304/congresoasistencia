@@ -1,0 +1,762 @@
+[
+  {
+    "dni": "72620394",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:25:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "70343567",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:25:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "60993564",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:25:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "74232003",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:27:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "74911104",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:28:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "60757040",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:28:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "70966892",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:30:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "76420260",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:31:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "70862394",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:31:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "70648028",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:31:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "60964526",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:32:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "60961417",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:33:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "71184860",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:33:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "72602453",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:34:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "61279471",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:39:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "75495674",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:40:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "75020158",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:40:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "73319821",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:40:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "72311331",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:40:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "61058485",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:40:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "70951152",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:40:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "70764558",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:41:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "77182868",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:43:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "73240196",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:50:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "73710509",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:52:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "61261541",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:55:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "75682484",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:55:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "60383303",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:56:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "60502707",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:56:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "75628678",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:56:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "61444049",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:56:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "70742658",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:56:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "60928602",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:57:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "60876224",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:58:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "78332617",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:58:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "71582830",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:58:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "74119820",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:58:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "60425632",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:58:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "70848460",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:58:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "74300633",
+    "fecha": "2026-11-16",
+    "hora_entrada": "08:59:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "72338211",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:00:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "71497986",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:00:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "60663566",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:02:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "60778490",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:02:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "60929346",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:02:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "71045055",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:02:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "75053640",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:02:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "71199393",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:02:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "71934639",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:02:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "71486790",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:02:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "76161381",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:03:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "70745163",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:03:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "74576980",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:03:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "60993182",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:04:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "72989505",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:04:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "70961661",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:04:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "71231934",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:04:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "60040938",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:04:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "61465316",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:04:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "70950551",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:04:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "60779114",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:04:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "61353731",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:04:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "72728185",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:05:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "74576773",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:05:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "73951620",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:05:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "71146820",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:05:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "70642672",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:05:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "73461034",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:06:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "72890848",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:06:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "45834550",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:09:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "75879519",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:10:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "71320511",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:13:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "955197981",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:13:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "62968305",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:13:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "72916907",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:14:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "73670527",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:14:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "74821365",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:14:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "74982001",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:14:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "61069965",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:14:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "75540865",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:15:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "62750247",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:15:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "48084410",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:16:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "03381552",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:17:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "74815925",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:17:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "60637257",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:17:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "60741153",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:17:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "60779096",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:18:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "71940772",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:18:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "75919292",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:18:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "60488555",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:18:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "18206500",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:19:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "75665009",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:19:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "74242265",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:19:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "75894328",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:19:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "73781958",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:19:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
+  }
+]

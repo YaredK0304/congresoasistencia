@@ -983,16 +983,33 @@ function limpiarTodo({ incluirParticipantes = true } = {}) {
   return obtenerResumenGeneral();
 }
 
-// Al iniciar cualquier instancia (ej. en Vercel), cargar la base de inscritos del Google Forms si está vacía
-if (Object.keys(store.participantes).length === 0) {
-  try {
-    const semillaPath = path.join(__dirname, 'participantes_semilla.json');
-    if (fs.existsSync(semillaPath)) {
-      const semilla = JSON.parse(fs.readFileSync(semillaPath, 'utf8'));
-      importarParticipantes(semilla, 'FORMS');
+// Al iniciar cualquier instancia, asegurar que todos los participantes y sesiones rescatadas estén cargados
+try {
+  const semillaPath = path.join(__dirname, 'participantes_semilla.json');
+  if (fs.existsSync(semillaPath)) {
+    const semilla = JSON.parse(fs.readFileSync(semillaPath, 'utf8'));
+    importarParticipantes(semilla, 'FORMS');
+  }
+  const sesionesSemillaPath = path.join(__dirname, 'sesiones_semilla.json');
+  if (fs.existsSync(sesionesSemillaPath) && store.sesiones.length === 0) {
+    const sesSemilla = JSON.parse(fs.readFileSync(sesionesSemillaPath, 'utf8'));
+    for (const s of sesSemilla) {
+      const tsEntrada = getNowLocal(s.fecha, s.hora_entrada).ts;
+      store.sesiones.push({
+        id: store.nextId++,
+        dni: s.dni,
+        fecha: s.fecha,
+        hora_entrada: s.hora_entrada,
+        hora_salida: s.hora_salida || null,
+        minutos: Number(s.minutos || 0),
+        ts_entrada: tsEntrada,
+        ts_salida: null,
+        nota: s.nota || '',
+      });
     }
-  } catch (_) {}
-}
+    saveStoreToDisk();
+  }
+} catch (_) {}
 
 module.exports = {
   getConfig,

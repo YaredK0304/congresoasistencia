@@ -120,14 +120,6 @@
     }
   },
   {
-    "dni": "70635627",
-    "nombres": "Nataniel David Lozada Suárez",
-    "datos_extra": {
-      "Correo electrónico": "ndlozadas@unitru.edu.pe",
-      "Número de celular de contacto": "922431404"
-    }
-  },
-  {
     "dni": "75103775",
     "nombres": "Zaith García",
     "datos_extra": {
@@ -221,30 +213,6 @@
     "datos_extra": {
       "Correo electrónico": "yfcastromontec@unitru.edu.pe",
       "Número de celular de contacto": "994771545"
-    }
-  },
-  {
-    "dni": "61109081",
-    "nombres": "Pierre Flores Naveda",
-    "datos_extra": {
-      "Correo electrónico": "florespierrr@gmail.com",
-      "Número de celular de contacto": "965140451"
-    }
-  },
-  {
-    "dni": "61109081",
-    "nombres": "Pierre Flores Naveda",
-    "datos_extra": {
-      "Correo electrónico": "florespierrr@gmail.com",
-      "Número de celular de contacto": "965140451"
-    }
-  },
-  {
-    "dni": "61109081",
-    "nombres": "Pierre Flores Naveda",
-    "datos_extra": {
-      "Correo electrónico": "florespierrr@gmail.com",
-      "Número de celular de contacto": "965140451"
     }
   },
   {
@@ -353,7 +321,7 @@
   },
   {
     "dni": "18142006",
-    "nombres": "DAVID GONZALEZ ESPINO",
+    "nombres": "David Gonzalez Espino",
     "datos_extra": {
       "Correo electrónico": "dgonzalez@unf.edu.pe",
       "Número de celular de contacto": "948447210"
@@ -441,9 +409,9 @@
   },
   {
     "dni": "60137756",
-    "nombres": "Angélica Sarai Vereau Cruzado",
+    "nombres": "Angelica Sarai Vereau Cruzado",
     "datos_extra": {
-      "Correo electrónico": "T1091901426@unitru.edu.pe",
+      "Correo electrónico": "t1091901426@unitru.edu.pe",
       "Número de celular de contacto": "966088656"
     }
   },
@@ -525,14 +493,6 @@
     "datos_extra": {
       "Correo electrónico": "T1101901026@unitru.edu.pe",
       "Número de celular de contacto": "933471357"
-    }
-  },
-  {
-    "dni": "60137756",
-    "nombres": "Angelica Sarai Vereau Cruzado",
-    "datos_extra": {
-      "Correo electrónico": "t1091901426@unitru.edu.pe",
-      "Número de celular de contacto": "966088656"
     }
   },
   {
@@ -816,14 +776,6 @@
     }
   },
   {
-    "dni": "18142006",
-    "nombres": "David Gonzalez Espino",
-    "datos_extra": {
-      "Correo electrónico": "dgonzalez@unf.edu.pe",
-      "Número de celular de contacto": "948447210"
-    }
-  },
-  {
     "dni": "17887779",
     "nombres": "AURORA ROSA NECIOSUP OBANDO",
     "datos_extra": {
@@ -886,5 +838,395 @@
       "Correo electrónico": "jdgarciaj@unitru.edu.pe",
       "Número de celular de contacto": "941230931"
     }
+  },
+  {
+    "dni": "48084410",
+    "nombres": "Vejarano Paredes Ivonee",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "60993182",
+    "nombres": "Anderson Smith Saldaña Quiroz",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "71320511",
+    "nombres": "Camila Esteffany Ramos de la Cruz",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "70961661",
+    "nombres": "DAYRA SOFÍA SOLANO SÁNCHEZ",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "73461034",
+    "nombres": "Edith Milagros Rojas Lagos",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "60663566",
+    "nombres": "Eli Jimena",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "72728185",
+    "nombres": "Fátima Lucero Solano Calderón",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "74576773",
+    "nombres": "Fiorela Judith Castillo Villacorta",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "60778490",
+    "nombres": "Grecia Bocanegra Alvarez",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "73951620",
+    "nombres": "Juan Alexander Piundo Lopez",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "72338211",
+    "nombres": "Kiara Rodriguez Cardenas",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "71497986",
+    "nombres": "Margely Cruz Rivera",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "955197981",
+    "nombres": "NAOMI AMPARITO TEJADA FLORES",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "71146820",
+    "nombres": "Valdiviezo Laveriano Roy Jhon",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "71582830",
+    "nombres": "Valeria Calderón",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "72916907",
+    "nombres": "Zulema Toledo",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "73670527",
+    "nombres": "Abanto Alvarado Olga",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "75540865",
+    "nombres": "Abihail Eunice",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "61261541",
+    "nombres": "Alex Jhamir Peña Quiroz",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "75879519",
+    "nombres": "Alexander Alcántara",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "71045055",
+    "nombres": "Ana Cecilia Ruiz Diaz",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "74821365",
+    "nombres": "Ana Yasmin Gutierrez Rodríguez",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "62750247",
+    "nombres": "Anabella Kassandra Arboleda Correa",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "75020158",
+    "nombres": "Angeles Martínez Santiago",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "74911104",
+    "nombres": "Anthony Jesús Solorzano de la Cruz",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "60964526",
+    "nombres": "Brayan Valqui Peralta",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "73319821",
+    "nombres": "Brian Manuel Garcia Romero",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "72311331",
+    "nombres": "Bryan Cabrera",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "70343567",
+    "nombres": "Carlos Renzo Izquierdo Cruz",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "76161381",
+    "nombres": "Cristina Alexandra Narvaez Ortiz",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "74119820",
+    "nombres": "Danna Paola Alzugaray Avila",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "75053640",
+    "nombres": "Deyli Dalith Polo Riveros",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "73710509",
+    "nombres": "Erika De La Cruz Barrueto",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "60961417",
+    "nombres": "Espinoza Uriol Fabrizio",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "74982001",
+    "nombres": "Estefany Mariana Nuñez Cruzado",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "61058485",
+    "nombres": "Fabrizio Franccesco Castillo Loyola",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "70745163",
+    "nombres": "Florcita De la Cruz Baca",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "70951152",
+    "nombres": "Gustavo Lau Castillo",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "71199393",
+    "nombres": "Jhanine Quiroz",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "72890848",
+    "nombres": "Jimena Lucero Vigo Vidal",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "71184860",
+    "nombres": "Jorge Luis Preciado Avila",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "74815925",
+    "nombres": "Katherine Isella Rodríguez Rumay",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "73240196",
+    "nombres": "Kevin Yared Mory Camones",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "70764558",
+    "nombres": "Leonardo Enrique Vasquez Marreros",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "61444049",
+    "nombres": "Lucero Loana Urbina Flores",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "71934639",
+    "nombres": "Medalit Liseth Solano Avila",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "60637257",
+    "nombres": "Milagros Adriana Villalobos Panaifo",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "45834550",
+    "nombres": "Monica Luz Arqueros Ávalos",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "74576980",
+    "nombres": "Prado Ramos Maricielo",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "77182868",
+    "nombres": "Richard Daniel plaza Ortiz",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "61069965",
+    "nombres": "Romero Gambia Lupita Alexandra",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "70742658",
+    "nombres": "Sanchez Rojas Wilfredo Caleb",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "70848460",
+    "nombres": "Selene Campos Vasquez",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "72602453",
+    "nombres": "Sergi Farid Ramirez Melendrez",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "71486790",
+    "nombres": "Tatiana Isabel Infantes Gordillo",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "60928602",
+    "nombres": "Trujillo alayo carlos diego",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "60741153",
+    "nombres": "Vania Uceda Roque",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "18206500",
+    "nombres": "Esther belisa asmat sigueñas",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "60779096",
+    "nombres": "Calixto Zamora",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "75665009",
+    "nombres": "Enyger Merino Cartagena",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "71940772",
+    "nombres": "Javier Junior Deza Saboya",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "74242265",
+    "nombres": "Leydi Nicole Marquina Quispe",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "75894328",
+    "nombres": "MELISSA BRIGIT AVALOS OLIVARES",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "75919292",
+    "nombres": "Natali Campos Maque",
+    "origen": "PUERTA",
+    "datos_extra": {}
+  },
+  {
+    "dni": "60488555",
+    "nombres": "Jumer Erick Martel Ugalde",
+    "origen": "PUERTA",
+    "datos_extra": {}
   }
 ]
