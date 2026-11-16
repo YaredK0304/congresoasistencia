@@ -469,22 +469,36 @@ const requestHandler = async (req, res) => {
     if (pathname === '/api/buscar' && req.method === 'GET') {
       const q = parsedUrl.searchParams.get('q') || '';
       const fecha = parsedUrl.searchParams.get('fecha') || undefined;
-      const resultados = db.buscarParticipantes(q, fecha);
+      let resultados = db.buscarParticipantes(q, fecha);
+      if (resultados.length === 0 && db.getConfig().sheets_url) {
+        try {
+          await sincronizarDesdeSheetsUrl();
+          resultados = db.buscarParticipantes(q, fecha);
+        } catch (_) {}
+      }
       return sendJson(res, 200, { ok: true, resultados });
     }
 
     if (pathname === '/api/participante' && req.method === 'GET') {
       const dni = parsedUrl.searchParams.get('dni') || '';
       const fecha = parsedUrl.searchParams.get('fecha') || undefined;
-      const estado = db.obtenerEstadoParticipante(dni, fecha);
-      if (!estado) {
-        triggerBackgroundSyncIfNeeded();
+      let estado = db.obtenerEstadoParticipante(dni, fecha);
+      if (!estado && db.getConfig().sheets_url) {
+        try {
+          await sincronizarDesdeSheetsUrl();
+          estado = db.obtenerEstadoParticipante(dni, fecha);
+        } catch (_) {}
       }
       return sendJson(res, 200, { ok: true, encontrado: Boolean(estado), estado });
     }
 
     if (pathname === '/api/marcar' && req.method === 'POST') {
       const body = await readJsonBody(req, 32 * 1024);
+      if (body.dni && !db.obtenerEstadoParticipante(body.dni) && db.getConfig().sheets_url) {
+        try {
+          await sincronizarDesdeSheetsUrl();
+        } catch (_) {}
+      }
       const resultado = db.registrarMarca({
         dni: body.dni,
         nombres: body.nombres,
