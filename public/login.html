@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iniciar Sesión - Panel Administrador</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="qr-body" style="justify-content: center;">
+  <div class="qr-container" style="max-width: 410px;">
+    <header class="event-header">
+      <div class="event-badge">🔒 Acceso Restringido</div>
+      <h1 class="event-title">Panel Administrativo</h1>
+      <p style="font-size: 0.86rem; color: #cbd5e1;">
+        Ingresa tus credenciales de organizador para gestionar el congreso.
+      </p>
+    </header>
+
+    <form id="login-form" class="card">
+      <div style="margin-bottom: 14px;">
+        <label class="form-label" for="login-user">Usuario Administrador</label>
+        <input
+          type="text"
+          id="login-user"
+          class="input-lg"
+          placeholder="admin"
+          value="admin"
+          required
+          autocomplete="username"
+        />
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label class="form-label" for="login-pass">Contraseña</label>
+        <input
+          type="password"
+          id="login-pass"
+          class="input-lg"
+          placeholder="••••••••••••"
+          required
+          autocomplete="current-password"
+        />
+      </div>
+
+      <div
+        id="login-error"
+        class="hidden"
+        style="margin-bottom: 14px; padding: 10px 12px; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; border-radius: 10px; font-size: 0.85rem; font-weight: 600;"
+      ></div>
+
+      <button type="submit" id="btn-login" class="btn btn-primary btn-block" style="padding: 15px;">
+        🔑 Ingresar al Panel Admin
+      </button>
+    </form>
+
+    <div style="text-align: center; margin-top: 10px;">
+      <a href="/" style="color: rgba(255,255,255,0.75); font-size: 0.84rem; text-decoration: none;">
+        ← Volver al Formulario de Asistencia (QR)
+      </a>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('login-form');
+    const errBox = document.getElementById('login-error');
+    const btn = document.getElementById('btn-login');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errBox.classList.add('hidden');
+      btn.disabled = true;
+      btn.textContent = 'Verificando...';
+
+      try {
+        const resp = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            usuario: document.getElementById('login-user').value.trim(),
+            password: document.getElementById('login-pass').value,
+          }),
+        });
+        const data = await resp.json();
+        if (!data.ok) {
+          errBox.textContent = data.mensaje || 'Credenciales incorrectas.';
+          errBox.classList.remove('hidden');
+          btn.disabled = false;
+          btn.textContent = '🔑 Ingresar al Panel Admin';
+          return;
+        }
+        window.location.href = '/admin';
+      } catch (err) {
+        errBox.textContent = 'Error de conexión con el servidor.';
+        errBox.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = '🔑 Ingresar al Panel Admin';
+      }
+    });
+  </script>
+</body>
+</html>

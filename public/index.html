@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Registro de Asistencia - Auditorio</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="qr-body">
+  <div class="qr-container">
+    <!-- CABECERA DEL CONGRESO -->
+    <header class="event-header">
+      <div class="event-badge">
+        <span>📍 Control de Puerta • Auditorio</span>
+      </div>
+      <h1 class="event-title" id="ui-event-title">Congreso Académico - Control de Auditorio</h1>
+      <div class="live-clock" id="ui-live-clock">Cargando hora oficial...</div>
+    </header>
+
+    <!-- PANTALLA DE PASE DE CONFIRMACIÓN (PARA MOSTRAR EN PUERTA) -->
+    <section id="view-pass" class="hidden">
+      <div id="pass-box" class="pass-card pass-entrada">
+        <div class="pass-icon" id="pass-icon">✅</div>
+        <div class="pass-badge" id="pass-badge">ENTRADA REGISTRADA</div>
+        <div class="pass-name" id="pass-name">Nombre del Participante</div>
+        <div class="pass-dni" id="pass-dni">DNI: --------</div>
+
+        <div class="pass-stats">
+          <div>
+            <div class="pass-stat-label" id="pass-stat1-label">Hora de Entrada</div>
+            <div class="pass-stat-value" id="pass-stat1-val">08:00</div>
+          </div>
+          <div>
+            <div class="pass-stat-label" id="pass-stat2-label">Tiempo en Bloque</div>
+            <div class="pass-stat-value" id="pass-stat2-val">En curso</div>
+          </div>
+          <div>
+            <div class="pass-stat-label">Acumulado Hoy</div>
+            <div class="pass-stat-value" id="pass-hoy-val">0h 00m</div>
+          </div>
+          <div>
+            <div class="pass-stat-label">Total Congreso</div>
+            <div class="pass-stat-value" id="pass-total-val">0h 00m</div>
+          </div>
+        </div>
+
+        <p style="font-size: 0.84rem; opacity: 0.92; margin-bottom: 12px;">
+          Muestra esta pantalla al personal en la puerta del auditorio.
+        </p>
+
+        <button type="button" class="btn btn-block" style="background: rgba(255,255,255,0.95); color: #0f172a;" id="btn-volver-inicio">
+          🔄 Realizar otro registro / Volver
+        </button>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size: 0.95rem; font-weight: 800; margin-bottom: 8px;">
+          📋 Tus bloques registrados hoy
+        </h3>
+        <div id="pass-blocks-list" class="blocks-list"></div>
+      </div>
+    </section>
+
+    <!-- PANTALLA PRINCIPAL DE FORMULARIO QR -->
+    <section id="view-form">
+      <div class="card">
+        <label class="form-label" for="input-busqueda">
+          Ingresa tu DNI o busca tus Nombres y Apellidos:
+        </label>
+
+        <div class="search-wrapper">
+          <input
+            type="text"
+            id="input-busqueda"
+            class="input-lg"
+            placeholder="Ej: 72345678 o escribe tu nombre..."
+            autocomplete="off"
+          />
+          <div id="autocomplete-box" class="autocomplete-list hidden"></div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+          <span style="font-size: 0.78rem; color: #64748b;" id="helper-text">
+            El sistema detecta automáticamente si te toca Entrada o Salida.
+          </span>
+          <button type="button" id="btn-limpiar-input" class="hidden" style="background: none; border: none; color: #2563eb; font-size: 0.8rem; font-weight: 700; cursor: pointer;">
+            Cambiar DNI
+          </button>
+        </div>
+
+        <!-- CAMPO ADICIONAL SI EL DNI NO ESTABA EN EL GOOGLE FORMS -->
+        <div id="nuevo-participante-box" class="hidden" style="margin-top: 14px; padding: 14px; background: #eff6ff; border: 1px solid #93c5fd; border-radius: 12px;">
+          <div style="font-size: 0.84rem; font-weight: 700; color: #1e40af; margin-bottom: 8px;">
+            ℹ️ Tu DNI no figuraba en el formulario previo. Ingresa tus Nombres y Apellidos para registrarte:
+          </div>
+          <input
+            type="text"
+            id="input-nombres-nuevo"
+            class="input-lg"
+            placeholder="Ej: Juan Carlos Pérez Gómez"
+            style="background: #ffffff; font-size: 0.98rem; padding: 12px;"
+          />
+        </div>
+
+        <!-- TARJETA DE VISTA PREVIA DEL PARTICIPANTE -->
+        <div id="preview-box" class="participant-preview hidden">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+            <div>
+              <div class="preview-name" id="prev-name">---</div>
+              <div class="preview-dni" id="prev-dni">DNI: ---</div>
+            </div>
+            <span id="prev-badge" class="status-pill pill-out">Fuera</span>
+          </div>
+
+          <div id="prev-status-detail" style="font-size: 0.85rem; color: #334155; margin-bottom: 12px;"></div>
+
+          <div style="display: flex; gap: 12px; font-size: 0.82rem; background: rgba(255,255,255,0.75); padding: 8px 12px; border-radius: 8px; margin-bottom: 12px;">
+            <div><strong>Hoy:</strong> <span id="prev-hoy">0h 00m</span></div>
+            <div>•</div>
+            <div><strong>Total Congreso:</strong> <span id="prev-total">0h 00m</span></div>
+          </div>
+
+          <div id="prev-bloques-container" class="hidden" style="margin-bottom: 12px;">
+            <div style="font-size: 0.78rem; font-weight: 700; color: #475569; margin-bottom: 4px;">
+              Bloques de hoy:
+            </div>
+            <div id="prev-bloques-list" style="font-size: 0.8rem; color: #1e293b;"></div>
+          </div>
+        </div>
+
+        <!-- ALERTA DE CONFIRMACIÓN RÁPIDA (ANTI DOBLE TOQUE) -->
+        <div id="confirm-rapido-box" class="hidden" style="margin-top: 14px; padding: 14px; background: #fffbeb; border: 2px solid #f59e0b; border-radius: 12px;">
+          <div id="confirm-rapido-msg" style="font-size: 0.88rem; font-weight: 700; color: #92400e; margin-bottom: 10px;"></div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" id="btn-forzar-marca" class="btn btn-salida btn-block btn-sm" style="padding: 11px;">
+              Sí, confirmar registro ahora
+            </button>
+            <button type="button" id="btn-cancelar-forzar" class="btn btn-secondary btn-sm" style="padding: 11px;">
+              Cancelar
+            </button>
+          </div>
+        </div>
+
+        <!-- MENSAJE DE ERROR -->
+        <div id="error-box" class="hidden" style="margin-top: 12px; padding: 11px 14px; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; border-radius: 10px; font-size: 0.86rem; font-weight: 600;"></div>
+
+        <!-- BOTÓN PRINCIPAL DE ACCIÓN -->
+        <div style="margin-top: 16px;">
+          <button type="button" id="btn-submit-marca" class="btn btn-entrada btn-block">
+            ✅ REGISTRAR ASISTENCIA
+          </button>
+        </div>
+      </div>
+
+      <!-- BOTÓN Y TARJETA DE CÓDIGO QR EN LA MISMA PÁGINA -->
+      <div class="card" style="padding: 16px 18px; text-align: center; background: #ffffff;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <div style="text-align: left;">
+            <div style="font-size: 0.9rem; font-weight: 800; color: #0f172a;">
+              🏁 Código QR de este Formulario
+            </div>
+            <div style="font-size: 0.78rem; color: #64748b;">
+              Muéstralo en pantalla o imprímelo para la puerta del auditorio
+            </div>
+          </div>
+          <button type="button" id="btn-toggle-qr-home" class="btn btn-primary btn-sm">
+            📱 Ver / Ocultar QR
+          </button>
+        </div>
+
+        <div id="home-qr-panel" style="margin-top: 14px; padding-top: 14px; border-top: 1px solid #e2e8f0;">
+          <div id="home-qr-svg" style="width: 220px; height: 220px; margin: 0 auto 10px; padding: 10px; border: 2px solid #cbd5e1; border-radius: 14px; background: #ffffff;"></div>
+          <div id="home-qr-url" style="font-size: 0.82rem; font-weight: 700; color: #2563eb; word-break: break-all; margin-bottom: 10px;"></div>
+          <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+            <a href="/login" id="link-config-qr" class="btn btn-secondary btn-sm">
+              🔒 Configurar / Imprimir en Panel Admin
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- INSTRUCCIONES BREVES DEL SISTEMA DE HORAS -->
+      <div class="card" style="padding: 16px 18px; background: rgba(255, 255, 255, 0.94);">
+        <div style="font-size: 0.85rem; font-weight: 800; color: #1e293b; margin-bottom: 6px;">
+          💡 ¿Cómo se acumulan tus horas en el auditorio?
+        </div>
+        <ul style="font-size: 0.8rem; color: #475569; padding-left: 18px; display: grid; gap: 4px;">
+          <li><strong>Al entrar (ej. 8:00 AM):</strong> Ingresa tu DNI o nombre para abrir tu bloque de asistencia.</li>
+          <li><strong>Al salir al refrigerio (ej. 11:00 AM):</strong> Vuelve a escanear para cerrar tu bloque y sumar tus horas (ej. <strong>+3h 00m</strong>).</li>
+          <li><strong>Al regresar en la tarde (ej. 3:00 PM) y salir (5:00 o 6:00 PM):</strong> Repite el proceso para seguir sumando horas cada día del congreso.</li>
+        </ul>
+      </div>
+
+      <div style="text-align: center; margin-top: 12px;">
+        <a href="/login" style="color: rgba(255,255,255,0.65); font-size: 0.8rem; text-decoration: none;">
+          🔒 Acceso Organizador (/login)
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

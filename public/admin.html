@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel Administrador - Control de Asistencia y Horas</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+
+<body>
+  <!-- CABECERA ADMIN -->
+  <header class="admin-header">
+    <div class="admin-title-group">
+      <h1 id="admin-event-title">Panel de Control • Asistencia y Horas Acumuladas</h1>
+      <p id="admin-network-info">Conectando con el servidor...</p>
+    </div>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <a href="/" target="_blank" class="btn btn-secondary btn-sm">
+        📱 Abrir Formulario Asistente (Vista QR)
+      </a>
+      <button type="button" id="btn-export-xlsx-top" class="btn btn-primary btn-sm">
+        📥 Descargar Reporte Excel (.xlsx)
+      </button>
+      <button type="button" id="btn-logout" class="btn btn-danger btn-sm">
+        🔒 Cerrar Sesión
+      </button>
+    </div>
+  </header>
+
+  <main class="admin-container">
+    <!-- TARJETAS KPI EN TIEMPO REAL -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Inscritos Base (Forms)</div>
+        <div class="kpi-value" id="kpi-inscritos">0</div>
+      </div>
+      <div class="kpi-card" style="border-left: 4px solid #059669;">
+        <div class="kpi-label">🟢 En el Auditorio Ahora</div>
+        <div class="kpi-value" style="color: #059669;" id="kpi-dentro">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Participantes con Asistencia</div>
+        <div class="kpi-value" id="kpi-con-registro">0</div>
+      </div>
+      <div class="kpi-card" style="border-left: 4px solid #2563eb;">
+        <div class="kpi-label">Total Bloques Entrada/Salida</div>
+        <div class="kpi-value" style="color: #2563eb;" id="kpi-bloques">0</div>
+      </div>
+    </section>
+
+    <!-- BARRA DE PESTAÑAS -->
+    <nav class="tabs-bar">
+      <button type="button" class="tab-btn active" data-tab="tab-horas">
+        📊 1. Horas Acumuladas (Por Día y Total)
+      </button>
+      <button type="button" class="tab-btn" data-tab="tab-puerta">
+        🚪 2. Monitor en Puerta y Simulador
+      </button>
+      <button type="button" class="tab-btn" data-tab="tab-forms">
+        🗂️ 3. Base de Datos Google Forms (DNI y Nombres)
+      </button>
+      <button type="button" class="tab-btn" data-tab="tab-qr">
+        🏁 4. Cartel Código QR (Imprimir)
+      </button>
+    </nav>
+
+    <!-- ALERTA INFORMATIVA -->
+    <div id="admin-toast" class="hidden"
+      style="margin-bottom: 16px; padding: 12px 16px; border-radius: 10px; background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; font-weight: 700; font-size: 0.9rem;">
+    </div>
+
+    <!-- ==========================================
+         PESTAÑA 1: TABLA DE HORAS ACUMULADAS
+         ========================================== -->
+    <section id="tab-horas" class="tab-panel">
+      <div class="card">
+        <div class="toolbar">
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <input type="text" id="filtro-buscar" class="input-sm" placeholder="🔍 Buscar por DNI o Nombre..."
+              style="min-width: 250px;" />
+            <select id="filtro-estado" class="input-sm">
+              <option value="TODOS">Todos los participantes</option>
+              <option value="DENTRO">🟢 Dentro del auditorio ahora</option>
+              <option value="CON_HORAS">⏱️ Con horas acumuladas</option>
+              <option value="SIN_HORAS">⚪ Sin asistencias aún</option>
+            </select>
+          </div>
+
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" id="btn-cargar-demo" class="btn btn-secondary btn-sm">
+              ✨ Cargar Ejemplo (Lunes 8-11 / 3-5:30 y Martes)
+            </button>
+            <a href="/api/admin/exportar.xlsx" class="btn btn-primary btn-sm">
+              📥 Exportar Excel (.xlsx)
+            </a>
+            <a href="/api/admin/exportar.csv" class="btn btn-secondary btn-sm">
+              📄 Exportar CSV
+            </a>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table id="tabla-resumen">
+            <thead id="thead-resumen">
+              <tr>
+                <th>DNI</th>
+                <th>Nombres y Apellidos</th>
+                <th>Estado Actual</th>
+                <th>Total Acumulado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-resumen">
+              <tr>
+                <td colspan="5" style="text-align: center; padding: 28px; color: #64748b;">
+                  Cargando participantes...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         PESTAÑA 2: MONITOR EN PUERTA Y SIMULADOR
+         ========================================== -->
+    <section id="tab-puerta" class="tab-panel hidden">
+      <div class="grid-2">
+        <!-- MARCADOR MANUAL / SIMULADOR DE PUERTA -->
+        <div class="card">
+          <h2 style="font-size: 1.08rem; font-weight: 800; margin-bottom: 6px;">
+            ⚡ Registro en Puerta / Simulador de Horario
+          </h2>
+          <p style="font-size: 0.84rem; color: #64748b; margin-bottom: 14px;">
+            Permite al personal de puerta registrar la entrada/salida de un asistente, o probar cómo suma horas en
+            distintas fechas y horas (ej. 08:00, 11:00, 15:00, 17:30).
+          </p>
+
+          <div style="display: grid; gap: 12px;">
+            <div>
+              <label class="form-label" style="font-size: 0.84rem;">DNI del Participante</label>
+              <input type="text" id="sim-dni" class="input-sm" style="width: 100%;" placeholder="Ej: 72345678" />
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 0.84rem;">Nombres (opcional si ya está en Forms)</label>
+              <input type="text" id="sim-nombres" class="input-sm" style="width: 100%;"
+                placeholder="Ej: Ana María Quispe Rojas" />
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div>
+                <label class="form-label" style="font-size: 0.84rem;">Fecha (dejar vacío = Hoy)</label>
+                <input type="date" id="sim-fecha" class="input-sm" style="width: 100%;" />
+              </div>
+              <div>
+                <label class="form-label" style="font-size: 0.84rem;">Hora (dejar vacío = Ahora)</label>
+                <input type="time" id="sim-hora" class="input-sm" style="width: 100%;" />
+              </div>
+            </div>
+
+            <button type="button" id="btn-sim-marcar" class="btn btn-entrada btn-block" style="padding: 12px;">
+              ✅ Registrar Entrada / Salida (Automático)
+            </button>
+          </div>
+
+          <hr style="margin: 18px 0; border: none; border-top: 1px solid #e2e8f0;" />
+
+          <h3 style="font-size: 0.94rem; font-weight: 800; margin-bottom: 8px;">
+            🔒 Cierre Masivo de Turno (Si alguien olvidó salir)
+          </h3>
+          <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 10px;">
+            Cierra todas las entradas que sigan abiertas asignándoles la hora de salida indicada:
+          </p>
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <input type="time" id="cierre-hora" class="input-sm" value="11:00" />
+            <button type="button" id="btn-cerrar-abiertas" class="btn btn-secondary btn-sm">
+              Cerrar sesiones abiertas a esa hora
+            </button>
+          </div>
+        </div>
+
+        <!-- PERSONAS DENTRO DEL AUDITORIO AHORA MISMO -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h2 style="font-size: 1.08rem; font-weight: 800;">
+              🟢 Personas Dentro del Auditorio (<span id="count-dentro-panel">0</span>)
+            </h2>
+          </div>
+          <div id="lista-dentro-ahora" style="max-height: 240px; overflow-y: auto; margin-bottom: 18px;"></div>
+
+          <h3 style="font-size: 0.96rem; font-weight: 800; margin-bottom: 8px;">
+            🕒 Últimos Registros en Puerta
+          </h3>
+          <div id="lista-ultimos-movimientos" style="max-height: 240px; overflow-y: auto;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         PESTAÑA 3: BASE DE DATOS GOOGLE FORMS
+         ========================================== -->
+    <section id="tab-forms" class="tab-panel hidden">
+      <div class="grid-2">
+        <!-- SUBIR ARCHIVO O SINCRONIZAR GOOGLE SHEETS -->
+        <div class="card">
+          <h2 style="font-size: 1.08rem; font-weight: 800; margin-bottom: 8px;">
+            📥 Opción A: Subir Excel (.xlsx) o CSV de Google Forms
+          </h2>
+          <p style="font-size: 0.84rem; color: #64748b; margin-bottom: 12px;">
+            Descarga las respuestas de tu Google Forms en formato <strong>.xlsx</strong> o <strong>.csv</strong> y
+            súbelo aquí. El sistema detecta automáticamente las columnas de <strong>DNI</strong> y
+            <strong>Nombres</strong>.
+          </p>
+
+          <input type="file" id="file-forms" accept=".csv,.xlsx,.tsv,.txt" class="input-sm"
+            style="width: 100%; margin-bottom: 10px;" />
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" id="btn-subir-archivo" class="btn btn-primary btn-sm">
+              📤 Importar Archivo Seleccionado
+            </button>
+            <a href="/api/admin/plantilla.csv" class="btn btn-secondary btn-sm">
+              📄 Descargar Plantilla Ejemplo
+            </a>
+          </div>
+
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid #e2e8f0;" />
+
+          <h2 style="font-size: 1.08rem; font-weight: 800; margin-bottom: 8px;">
+            🔗 Opción B: Conectar Enlace de Google Sheets del Forms
+          </h2>
+          <p style="font-size: 0.84rem; color: #64748b; margin-bottom: 10px;">
+            Si tu Google Forms guarda las respuestas en un Google Sheet público (<em>"Cualquier persona con el enlace
+              puede ver"</em>), pega el link aquí para sincronizar con un clic:
+          </p>
+          <input type="url" id="input-sheets-url" class="input-sm" style="width: 100%; margin-bottom: 10px;"
+            placeholder="https://docs.google.com/spreadsheets/d/..." />
+          <button type="button" id="btn-sync-sheets" class="btn btn-primary btn-sm">
+            🔄 Sincronizar desde Google Sheets
+          </button>
+        </div>
+
+        <!-- COPIAR Y PEGAR DESDE EXCEL -->
+        <div class="card">
+          <h2 style="font-size: 1.08rem; font-weight: 800; margin-bottom: 8px;">
+            📋 Opción C: Copiar y Pegar desde Excel / Google Sheets
+          </h2>
+          <p style="font-size: 0.84rem; color: #64748b; margin-bottom: 10px;">
+            También puedes seleccionar las celdas de <strong>DNI</strong> y <strong>Nombres</strong> en tu hoja de
+            cálculo, copiarlas (<kbd>Ctrl+C</kbd>) y pegarlas aquí abajo:
+          </p>
+          <textarea id="textarea-pegar-forms" rows="8" class="input-sm"
+            style="width: 100%; font-family: monospace; margin-bottom: 10px;"
+            placeholder="72345678	Ana María Quispe Rojas&#10;45891234	Carlos Eduardo Mendoza Vargas&#10;70981234	Lucía Fernanda Salazar Paredes"></textarea>
+          <div style="display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+            <button type="button" id="btn-importar-texto" class="btn btn-primary btn-sm">
+              ✅ Guardar Participantes Pegados
+            </button>
+            <button type="button" id="btn-limpiar-bd" class="btn btn-danger btn-sm">
+              🗑️ Reiniciar Asistencias
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         PESTAÑA 4: CARTEL CÓDIGO QR IMPRIMIBLE
+         ========================================== -->
+    <section id="tab-qr" class="tab-panel hidden">
+      <div class="grid-2">
+        <div class="card">
+          <h2 style="font-size: 1.08rem; font-weight: 800; margin-bottom: 10px;">
+            ⚙️ Configurar Cartel y Enlace del Código QR
+          </h2>
+          <p style="font-size: 0.84rem; color: #64748b; margin-bottom: 14px;">
+            El código QR lleva directamente al formulario donde el asistente pone su DNI o Nombre.
+          </p>
+
+          <div style="display: grid; gap: 12px;">
+            <div>
+              <label class="form-label" style="font-size: 0.84rem;">Nombre del Congreso / Auditorio</label>
+              <input type="text" id="cfg-nombre-evento" class="input-sm" style="width: 100%;" />
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 0.84rem;">Enlace al que apunta el QR</label>
+              <input type="text" id="cfg-url-qr" class="input-sm" style="width: 100%;" />
+              <span style="font-size: 0.76rem; color: #64748b;">
+                Por defecto usa la IP Wi-Fi de esta computadora para que los celulares en la red puedan abrirlo, o pon
+                tu URL pública si lo alojas en internet.
+              </span>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <button type="button" id="btn-guardar-cfg" class="btn btn-primary btn-sm">
+                💾 Actualizar QR y Título
+              </button>
+              <button type="button" id="btn-imprimir-qr" class="btn btn-entrada btn-sm">
+                🖨️ Imprimir Cartel QR (A4)
+              </button>
+            </div>
+          </div>
+
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid #e2e8f0;" />
+
+          <h3 style="font-size: 0.98rem; font-weight: 800; margin-bottom: 8px;">
+            🔐 Seguridad: Cambiar Usuario y Contraseña de /login
+          </h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+            <div>
+              <label style="font-size: 0.78rem; font-weight: 700;">Nuevo Usuario</label>
+              <input type="text" id="cfg-admin-user" class="input-sm" style="width: 100%;" placeholder="admin" />
+            </div>
+            <div>
+              <label style="font-size: 0.78rem; font-weight: 700;">Nueva Contraseña</label>
+              <input type="password" id="cfg-admin-pass" class="input-sm" style="width: 100%;" placeholder="Mínimo 4 caracteres" />
+            </div>
+          </div>
+          <button type="button" id="btn-guardar-credenciales" class="btn btn-secondary btn-sm">
+            🔑 Actualizar Contraseña de Acceso
+          </button>
+        </div>
+
+        <!-- VISTA PREVIA DEL CARTEL IMPRIMIBLE -->
+        <div>
+          <div id="printable-poster" class="poster-preview">
+            <div
+              style="font-size: 0.82rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #2563eb; margin-bottom: 6px;">
+              CONTROL OFICIAL DE ASISTENCIA • AUDITORIO
+            </div>
+            <h2 id="poster-title" style="font-size: 1.45rem; font-weight: 900; color: #0f172a; margin-bottom: 6px;">
+              Congreso Académico - Control de Auditorio
+            </h2>
+            <p style="font-size: 0.92rem; color: #475569; margin-bottom: 12px;">
+              Escanea este código QR al <strong>ENTRAR</strong> y al <strong>SALIR</strong> del auditorio para acumular
+              tus horas de asistencia.
+            </p>
+
+            <div id="poster-qr-container" class="poster-qr-box"></div>
+
+            <div
+              style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 12px; margin-top: 10px;">
+              <div style="font-size: 0.85rem; font-weight: 800; color: #0f172a;">
+                1. Escanea el QR • 2. Ingresa tu DNI o Nombre • 3. Muestra tu confirmación en puerta
+              </div>
+              <div id="poster-url-text" style="font-size: 0.82rem; color: #2563eb; font-weight: 700; margin-top: 4px;">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL PARA VER / EDITAR / AGREGAR BLOQUES DE UN PARTICIPANTE -->
+  <div id="modal-bloques" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+        <div>
+          <h3 id="modal-part-nombre" style="font-size: 1.15rem; font-weight: 800;">Participante</h3>
+          <p id="modal-part-dni" style="font-size: 0.85rem; color: #64748b;">DNI: ---</p>
+        </div>
+        <button type="button" id="btn-cerrar-modal" class="btn btn-secondary btn-sm">✕ Cerrar</button>
+      </div>
+
+      <div id="modal-lista-bloques" style="margin-bottom: 18px;"></div>
+
+      <div style="background: #f8fafc; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0;">
+        <h4 style="font-size: 0.9rem; font-weight: 800; margin-bottom: 10px;">
+          ➕ Agregar Bloque de Asistencia Manualmente
+        </h4>
+        <div
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 10px;">
+          <div>
+            <label style="font-size: 0.76rem; font-weight: 700;">Fecha</label>
+            <input type="date" id="add-bloque-fecha" class="input-sm" style="width: 100%;" />
+          </div>
+          <div>
+            <label style="font-size: 0.76rem; font-weight: 700;">Hora Entrada</label>
+            <input type="time" id="add-bloque-entrada" class="input-sm" style="width: 100%;" value="08:00" />
+          </div>
+          <div>
+            <label style="font-size: 0.76rem; font-weight: 700;">Hora Salida</label>
+            <input type="time" id="add-bloque-salida" class="input-sm" style="width: 100%;" value="11:00" />
+          </div>
+        </div>
+        <button type="button" id="btn-guardar-bloque-manual" class="btn btn-primary btn-sm">
+          💾 Guardar Bloque y Recalcular Horas
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/admin.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "sistema-asistencia-congreso",
+  "version": "1.0.0",
+  "description": "Sistema de registro de asistencias y acumulacion de horas por bloques con QR para auditorio/congreso",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "start": "node --no-warnings server.js"
+  }
+}
