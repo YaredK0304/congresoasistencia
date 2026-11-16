@@ -94,12 +94,14 @@
   }
 
   const inputCorreoNuevo = document.getElementById('input-correo-nuevo');
+  const inputCorreoPrincipal = document.getElementById('input-correo-principal');
 
   function resetPreview() {
     selectedParticipantState = null;
     previewBox.classList.add('hidden');
     nuevoBox.classList.remove('hidden');
     inputNombresNuevo.classList.remove('hidden');
+    if (inputCorreoPrincipal) inputCorreoPrincipal.value = '';
     confirmRapidoBox.classList.add('hidden');
     showError('');
     btnSubmitMarca.className = 'btn btn-entrada btn-block';
@@ -110,9 +112,9 @@
     selectedParticipantState = estado;
     selectedDni = estado.participante.dni;
     nuevoBox.classList.remove('hidden');
-    inputNombresNuevo.classList.add('hidden');
-    if (inputCorreoNuevo && estado.participante.correo && !inputCorreoNuevo.value) {
-      inputCorreoNuevo.value = estado.participante.correo;
+    inputNombresNuevo.classList.remove('hidden');
+    if (inputCorreoPrincipal) {
+      inputCorreoPrincipal.value = estado.participante.correo || '';
     }
     confirmRapidoBox.classList.add('hidden');
     showError('');
@@ -345,8 +347,9 @@
     // Determinar DNI, Nombres y Correo a enviar
     let dniEnviar = selectedDni;
     let nombresEnviar = inputNombresNuevo.value.trim();
-    const inputCorreoNuevo = document.getElementById('input-correo-nuevo');
-    const correoEnviar = inputCorreoNuevo ? inputCorreoNuevo.value.trim() : '';
+    const correoPrincipal = inputCorreoPrincipal ? inputCorreoPrincipal.value.trim() : '';
+    const correoNuevo = inputCorreoNuevo ? inputCorreoNuevo.value.trim() : '';
+    const correoEnviar = correoPrincipal || correoNuevo;
 
     if (!dniEnviar) {
       const soloDigitos = rawInput.replace(/\D/g, '');
@@ -355,6 +358,13 @@
       } else {
         nombresEnviar = rawInput;
       }
+    }
+
+    const tieneCorreoGuardado = Boolean(selectedParticipantState?.participante?.correo);
+    if (!correoEnviar && !tieneCorreoGuardado) {
+      showError('Por favor ingresa tu Correo Electrónico (es obligatorio para tu certificado).');
+      if (inputCorreoPrincipal) inputCorreoPrincipal.focus();
+      return;
     }
 
     let sesionPrevia = null;
@@ -453,6 +463,11 @@
     if (!nombresVal) {
       showErrorNuevo('Ingresa tus Nombres y Apellidos completos.');
       if (inputNombresNuevo) inputNombresNuevo.focus();
+      return;
+    }
+    if (!correoVal) {
+      showErrorNuevo('Ingresa tu Correo Electrónico (es obligatorio para tu certificado).');
+      if (inputCorreoNuevo) inputCorreoNuevo.focus();
       return;
     }
 

@@ -79,13 +79,30 @@
           <div id="autocomplete-box" class="autocomplete-list hidden"></div>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; margin-bottom: 12px;">
           <span style="font-size: 0.78rem; color: #64748b;" id="helper-text">
             El sistema detecta automáticamente si te toca Entrada o Salida.
           </span>
           <button type="button" id="btn-limpiar-input" class="hidden" style="background: none; border: none; color: #2563eb; font-size: 0.8rem; font-weight: 700; cursor: pointer;">
             Cambiar DNI
           </button>
+        </div>
+
+        <!-- CAMPO DE CORREO OBLIGATORIO EN LA TARJETA PRINCIPAL -->
+        <div style="margin-bottom: 12px;">
+          <label class="form-label" for="input-correo-principal">
+            Correo Electrónico (Obligatorio para enviarte tu certificado):
+          </label>
+          <input
+            type="email"
+            id="input-correo-principal"
+            class="input-lg"
+            placeholder="Ej: correo@unitru.edu.pe"
+            autocomplete="email"
+          />
+          <span style="font-size: 0.76rem; color: #64748b;" id="helper-correo-principal">
+            Si aún no teníamos tu correo registrado, se guardará en tu usuario al marcar tu entrada o salida.
+          </span>
         </div>
 
         <!-- TARJETA DE VISTA PREVIA DEL PARTICIPANTE -->

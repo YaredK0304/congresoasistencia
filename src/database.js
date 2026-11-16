@@ -1063,10 +1063,14 @@ function sincronizarEstadoCliente({ participantes = [], sesiones = [] } = {}) {
       };
       cambio = true;
     } else if (p.datos_extra && Object.keys(p.datos_extra).length > 0) {
+      const prevJson = JSON.stringify(store.participantes[dni].datos_extra || {});
       store.participantes[dni].datos_extra = {
-        ...p.datos_extra,
         ...(store.participantes[dni].datos_extra || {}),
+        ...p.datos_extra,
       };
+      if (JSON.stringify(store.participantes[dni].datos_extra) !== prevJson) {
+        cambio = true;
+      }
     }
   }
 

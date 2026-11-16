@@ -822,5 +822,21 @@
     "hora_salida": null,
     "minutos": 0,
     "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "8777777777",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:53:00",
+    "hora_salida": "09:55:00",
+    "minutos": 2,
+    "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "01111111",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:55:00",
+    "hora_salida": "09:55:00",
+    "minutos": 1439,
+    "nota": "Entrada registrada en puerta"
   }
 ]

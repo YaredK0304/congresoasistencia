@@ -1272,5 +1272,21 @@
     "datos_extra": {
       "Correo electrónico": "jcamposf@unitru.edu.pe"
     }
+  },
+  {
+    "dni": "8777777777",
+    "nombres": "aaa aaaa",
+    "origen": "PUERTA",
+    "datos_extra": {
+      "Correo electrónico": "foxpriv@gmail.com"
+    }
+  },
+  {
+    "dni": "01111111",
+    "nombres": "aaaaa",
+    "origen": "PUERTA",
+    "datos_extra": {
+      "Correo electrónico": "foxpriv@gmail.com"
+    }
   }
 ]
