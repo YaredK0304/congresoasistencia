@@ -414,6 +414,7 @@ function obtenerEstadoParticipante(dniRaw, fechaActual) {
     participante: {
       dni: p.dni,
       nombres: p.nombres,
+      correo: p.datos_extra?.['Correo electrónico'] || '',
       origen: p.origen,
     },
     dentro: Boolean(sesionAbierta),

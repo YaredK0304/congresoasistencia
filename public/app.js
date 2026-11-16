@@ -93,10 +93,13 @@
     errorBox.classList.remove('hidden');
   }
 
+  const inputCorreoNuevo = document.getElementById('input-correo-nuevo');
+
   function resetPreview() {
     selectedParticipantState = null;
     previewBox.classList.add('hidden');
-    nuevoBox.classList.add('hidden');
+    nuevoBox.classList.remove('hidden');
+    inputNombresNuevo.classList.remove('hidden');
     confirmRapidoBox.classList.add('hidden');
     showError('');
     btnSubmitMarca.className = 'btn btn-entrada btn-block';
@@ -106,7 +109,11 @@
   function renderParticipantPreview(estado) {
     selectedParticipantState = estado;
     selectedDni = estado.participante.dni;
-    nuevoBox.classList.add('hidden');
+    nuevoBox.classList.remove('hidden');
+    inputNombresNuevo.classList.add('hidden');
+    if (inputCorreoNuevo && estado.participante.correo && !inputCorreoNuevo.value) {
+      inputCorreoNuevo.value = estado.participante.correo;
+    }
     confirmRapidoBox.classList.add('hidden');
     showError('');
 
@@ -222,6 +229,7 @@
         if (!found) {
           previewBox.classList.add('hidden');
           nuevoBox.classList.remove('hidden');
+          inputNombresNuevo.classList.remove('hidden');
           btnSubmitMarca.className = 'btn btn-entrada btn-block';
           btnSubmitMarca.textContent = '✅ REGISTRARME Y MARCAR ENTRADA';
         }
