@@ -605,13 +605,13 @@
   });
 
   document.getElementById('btn-limpiar-bd').addEventListener('click', async () => {
-    if (!confirm('¿Deseas limpiar todos los bloques de asistencia registrados?')) return;
+    if (!confirm('¿Deseas vaciar todos los participantes de prueba y asistencias para dejar la base de datos en cero?')) return;
     await fetch('/api/admin/limpiar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ incluirParticipantes: false }),
+      body: JSON.stringify({ incluirParticipantes: true }),
     });
-    showToast('Se reiniciaron los registros de asistencia.');
+    showToast('Base de datos vaciada por completo (0 participantes, 0 asistencias).');
     await cargarResumen();
   });
 
