@@ -295,9 +295,67 @@
     }
   }
 
-  async function cargarResumen() {
+  let isFetchingResumen = false;
+
+  function loadUnionCache() {
     try {
-      const resp = await fetch('/api/admin/resumen');
+      const raw = JSON.parse(localStorage.getItem('congreso_union_cache_v1') || '{}');
+      return {
+        participantes: raw.participantes || {},
+        sesiones: raw.sesiones || {},
+      };
+    } catch (_) {
+      return { participantes: {}, sesiones: {} };
+    }
+  }
+
+  function saveUnionCache(cache) {
+    try {
+      localStorage.setItem('congreso_union_cache_v1', JSON.stringify(cache));
+    } catch (_) {}
+  }
+
+  function mergeResumenIntoUnionCache(data) {
+    const cache = loadUnionCache();
+    for (const p of data.participantes || []) {
+      if (p.origen === 'PUERTA' || p.origen === 'MANUAL' || (p.bloques && p.bloques.length > 0)) {
+        cache.participantes[p.dni] = {
+          dni: p.dni,
+          nombres: p.nombres,
+          origen: p.origen,
+          datos_extra: p.datos_extra || {},
+        };
+      }
+      for (const b of p.bloques || []) {
+        const key = `${p.dni}_${b.fecha}_${b.hora_entrada}`;
+        const prev = cache.sesiones[key];
+        if (!prev || (!prev.hora_salida && b.hora_salida)) {
+          cache.sesiones[key] = {
+            dni: p.dni,
+            fecha: b.fecha,
+            hora_entrada: b.hora_entrada,
+            hora_salida: b.hora_salida || null,
+            nota: b.nota || '',
+          };
+        }
+      }
+    }
+    saveUnionCache(cache);
+  }
+
+  async function cargarResumen() {
+    if (isFetchingResumen) return;
+    isFetchingResumen = true;
+    try {
+      const cache = loadUnionCache();
+      const resp = await fetch('/api/admin/resumen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          participantes: Object.values(cache.participantes),
+          sesiones: Object.values(cache.sesiones),
+        }),
+      });
       if (resp.status === 401) {
         window.location.href = '/login';
         return;
@@ -305,6 +363,7 @@
       const data = await resp.json();
       if (!data.ok) return;
 
+      mergeResumenIntoUnionCache(data);
       estadoGlobal = data;
       kpiInscritos.textContent = data.metricas.total_inscritos;
       kpiDentro.textContent = data.metricas.dentro_ahora;
@@ -338,6 +397,8 @@
       }
     } catch (e) {
       console.error('Error cargando resumen:', e);
+    } finally {
+      isFetchingResumen = false;
     }
   }
 
@@ -469,16 +530,16 @@
   // REGISTRO EN PUERTA / SIMULADOR
   // ==========================================
 
-  async function marcarDirectoPuerta({ dni, nombres, fecha, hora, forzar = true }) {
+  async function marcarDirectoPuerta({ dni, nombres, correo, fecha, hora, forzar = true }) {
     const resp = await fetch('/api/marcar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dni, nombres, fecha, hora, forzar }),
+      body: JSON.stringify({ dni, nombres, correo, fecha, hora, forzar }),
     });
     const data = await resp.json();
     if (!data.ok) {
       showToast(data.mensaje || 'Error al registrar marca', true);
-      return;
+      return false;
     }
     const msg =
       data.tipo === 'ENTRADA'
@@ -486,18 +547,26 @@
         : `👋 SALIDA registrada: ${data.participante.nombres} (${data.hora_entrada_bloque} → ${data.hora_marca} | +${data.horas_bloque_texto} | Total: ${data.horas_total_texto})`;
     showToast(msg);
     await cargarResumen();
+    return true;
   }
 
   document.getElementById('btn-sim-marcar').addEventListener('click', async () => {
     const dni = document.getElementById('sim-dni').value.trim();
     const nombres = document.getElementById('sim-nombres').value.trim();
+    const correoEl = document.getElementById('sim-correo');
+    const correo = correoEl ? correoEl.value.trim() : '';
     const fecha = document.getElementById('sim-fecha').value || undefined;
     const hora = document.getElementById('sim-hora').value || undefined;
     if (!dni && !nombres) {
       showToast('Ingresa el DNI o el nombre del participante.', true);
       return;
     }
-    await marcarDirectoPuerta({ dni, nombres, fecha, hora, forzar: true });
+    const ok = await marcarDirectoPuerta({ dni, nombres, correo, fecha, hora, forzar: true });
+    if (ok) {
+      document.getElementById('sim-dni').value = '';
+      document.getElementById('sim-nombres').value = '';
+      if (correoEl) correoEl.value = '';
+    }
   });
 
   document.getElementById('btn-cerrar-abiertas').addEventListener('click', async () => {

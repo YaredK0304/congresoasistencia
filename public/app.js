@@ -334,9 +334,11 @@
       return;
     }
 
-    // Determinar DNI y Nombres a enviar
+    // Determinar DNI, Nombres y Correo a enviar
     let dniEnviar = selectedDni;
     let nombresEnviar = inputNombresNuevo.value.trim();
+    const inputCorreoNuevo = document.getElementById('input-correo-nuevo');
+    const correoEnviar = inputCorreoNuevo ? inputCorreoNuevo.value.trim() : '';
 
     if (!dniEnviar) {
       const soloDigitos = rawInput.replace(/\D/g, '');
@@ -347,6 +349,11 @@
       }
     }
 
+    let sesionPrevia = null;
+    try {
+      sesionPrevia = JSON.parse(localStorage.getItem('sesion_activa_congreso') || 'null');
+    } catch (_) {}
+
     btnSubmitMarca.disabled = true;
     try {
       const resp = await fetch('/api/marcar', {
@@ -355,6 +362,8 @@
         body: JSON.stringify({
           dni: dniEnviar,
           nombres: nombresEnviar,
+          correo: correoEnviar,
+          sesion_previa: sesionPrevia,
           forzar,
         }),
       });
@@ -377,9 +386,21 @@
         return;
       }
 
-      // Guardar DNI en el celular del participante para que al salir a las 11:00 o volver a las 15:00 ya esté listo
+      // Guardar DNI y sesión activa en el celular del participante
       if (data.participante?.dni) {
         localStorage.setItem('ultimo_dni_congreso', data.participante.dni);
+        if (data.tipo === 'ENTRADA') {
+          localStorage.setItem(
+            'sesion_activa_congreso',
+            JSON.stringify({
+              dni: data.participante.dni,
+              fecha: data.fecha,
+              hora_entrada: data.hora_marca,
+            })
+          );
+        } else {
+          localStorage.removeItem('sesion_activa_congreso');
+        }
       }
 
       confirmRapidoBox.classList.add('hidden');

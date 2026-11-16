@@ -433,13 +433,16 @@ function obtenerEstadoParticipante(dniRaw, fechaActual) {
 function registrarMarca({
   dni: rawDni,
   nombres: rawNombres,
+  correo: rawCorreo,
   fechaCustom,
   horaCustom,
   forzar = false,
   nota = '',
+  sesion_previa = null,
 }) {
   let dni = cleanDNI(rawDni);
   const nombresInput = String(rawNombres || '').replace(/\s+/g, ' ').trim();
+  const correoInput = String(rawCorreo || '').trim();
 
   if (!dni && nombresInput) {
     const norm = normalizarTexto(nombresInput);
@@ -467,21 +470,53 @@ function registrarMarca({
         codigo: 'NO_ENCONTRADO_PEDIR_NOMBRE',
         dni,
         mensaje:
-          'No encontramos este DNI en la lista previa del Forms. Escribe tus Nombres y Apellidos para registrarte ahora mismo.',
+          'No encontramos este DNI en la lista previa del Forms. Escribe tus Nombres y Apellidos y tu Correo para registrarte ahora mismo.',
       };
+    }
+    const extraNuevo = {};
+    if (correoInput) {
+      extraNuevo['Correo electrónico'] = correoInput;
     }
     participante = {
       dni,
       nombres: nombresInput,
       nombres_norm: normalizarTexto(nombresInput),
-      datos_extra: {},
+      datos_extra: extraNuevo,
       origen: 'PUERTA',
       creado_en: new Date().toISOString(),
     };
     store.participantes[dni] = participante;
+  } else if (correoInput) {
+    participante.datos_extra = participante.datos_extra || {};
+    participante.datos_extra['Correo electrónico'] = correoInput;
   }
 
   const { fecha, hora, ts } = getNowLocal(fechaCustom, horaCustom);
+
+  // Si esta instancia no tenía aún la entrada previa pero el dispositivo del asistente sí la trae
+  if (
+    sesion_previa &&
+    sesion_previa.dni === dni &&
+    sesion_previa.fecha === fecha &&
+    sesion_previa.hora_entrada &&
+    !store.sesiones.some((s) => s.dni === dni && s.fecha === fecha && !s.hora_salida)
+  ) {
+    const hInPrev =
+      sesion_previa.hora_entrada.length === 5
+        ? `${sesion_previa.hora_entrada}:00`
+        : sesion_previa.hora_entrada;
+    store.sesiones.push({
+      id: store.nextId++,
+      dni,
+      fecha,
+      hora_entrada: hInPrev,
+      hora_salida: null,
+      minutos: 0,
+      ts_entrada: getNowLocal(fecha, hInPrev).ts,
+      ts_salida: null,
+      nota: 'Sincronizado desde dispositivo',
+    });
+  }
 
   // Cerrar sesiones olvidadas de días anteriores
   let sesionAbiertaHoy = null;
@@ -1011,6 +1046,70 @@ try {
   }
 } catch (_) {}
 
+function sincronizarEstadoCliente({ participantes = [], sesiones = [] } = {}) {
+  let cambio = false;
+  for (const p of participantes) {
+    if (!p || !p.dni || !p.nombres) continue;
+    const dni = cleanDNI(p.dni);
+    if (!store.participantes[dni]) {
+      store.participantes[dni] = {
+        dni,
+        nombres: p.nombres,
+        nombres_norm: normalizarTexto(p.nombres),
+        datos_extra: p.datos_extra || {},
+        origen: p.origen || 'PUERTA',
+        creado_en: new Date().toISOString(),
+      };
+      cambio = true;
+    } else if (p.datos_extra && Object.keys(p.datos_extra).length > 0) {
+      store.participantes[dni].datos_extra = {
+        ...p.datos_extra,
+        ...(store.participantes[dni].datos_extra || {}),
+      };
+    }
+  }
+
+  for (const s of sesiones) {
+    if (!s || !s.dni || !s.fecha || !s.hora_entrada) continue;
+    const dni = cleanDNI(s.dni);
+    const hIn = s.hora_entrada.length === 5 ? `${s.hora_entrada}:00` : s.hora_entrada;
+    const hOut = s.hora_salida
+      ? s.hora_salida.length === 5
+        ? `${s.hora_salida}:00`
+        : s.hora_salida
+      : null;
+
+    const existente = store.sesiones.find(
+      (x) => x.dni === dni && x.fecha === s.fecha && x.hora_entrada.slice(0, 5) === hIn.slice(0, 5)
+    );
+    if (!existente) {
+      const tsEntrada = getNowLocal(s.fecha, hIn).ts;
+      const tsSalida = hOut ? getNowLocal(s.fecha, hOut).ts : null;
+      const minutos = hOut ? calcularMinutosBloque(hIn, hOut) : 0;
+      store.sesiones.push({
+        id: store.nextId++,
+        dni,
+        fecha: s.fecha,
+        hora_entrada: hIn,
+        hora_salida: hOut,
+        minutos,
+        ts_entrada: tsEntrada,
+        ts_salida: tsSalida,
+        nota: s.nota || '',
+      });
+      cambio = true;
+    } else if (!existente.hora_salida && hOut) {
+      existente.hora_salida = hOut;
+      existente.ts_salida = getNowLocal(s.fecha, hOut).ts;
+      existente.minutos = calcularMinutosBloque(existente.hora_entrada, hOut);
+      cambio = true;
+    }
+  }
+
+  if (cambio) saveStoreToDisk();
+  return obtenerResumenGeneral();
+}
+
 module.exports = {
   getConfig,
   updateConfig,
@@ -1025,6 +1124,7 @@ module.exports = {
   eliminarBloque,
   cerrarSesionesAbiertas,
   obtenerResumenGeneral,
+  sincronizarEstadoCliente,
   cargarDatosEjemplo,
   limpiarTodo,
   formatearMinutos,

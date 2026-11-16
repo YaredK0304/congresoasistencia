@@ -502,10 +502,12 @@ const requestHandler = async (req, res) => {
       const resultado = db.registrarMarca({
         dni: body.dni,
         nombres: body.nombres,
+        correo: body.correo,
         fechaCustom: body.fecha,
         horaCustom: body.hora,
         forzar: Boolean(body.forzar),
         nota: body.nota || '',
+        sesion_previa: body.sesion_previa || null,
       });
       return sendJson(res, 200, resultado);
     }
@@ -523,7 +525,12 @@ const requestHandler = async (req, res) => {
         });
       }
 
-      if (pathname === '/api/admin/resumen' && req.method === 'GET') {
+      if (pathname === '/api/admin/resumen' && (req.method === 'GET' || req.method === 'POST')) {
+        if (req.method === 'POST') {
+          const body = await readJsonBody(req);
+          const resumen = db.sincronizarEstadoCliente(body);
+          return sendJson(res, 200, { ok: true, ...resumen });
+        }
         const resumen = db.obtenerResumenGeneral();
         return sendJson(res, 200, { ok: true, ...resumen });
       }
