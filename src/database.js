@@ -972,7 +972,7 @@ function cargarDatosEjemplo() {
   return obtenerResumenGeneral();
 }
 
-function limpiarTodo({ incluirParticipantes = false }) {
+function limpiarTodo({ incluirParticipantes = true } = {}) {
   store.sesiones = [];
   if (incluirParticipantes) {
     store.participantes = {};
@@ -980,13 +980,6 @@ function limpiarTodo({ incluirParticipantes = false }) {
   }
   saveStoreToDisk();
   return obtenerResumenGeneral();
-}
-
-// Cargar datos iniciales de ejemplo si es la primera vez que arranca vacío
-if (Object.keys(store.participantes).length === 0) {
-  try {
-    cargarDatosEjemplo();
-  } catch (_) {}
 }
 
 module.exports = {
