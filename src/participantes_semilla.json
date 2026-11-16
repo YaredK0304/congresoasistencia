@@ -1264,5 +1264,13 @@
     "nombres": "rodrigues rodriguez",
     "origen": "PUERTA",
     "datos_extra": {}
+  },
+  {
+    "dni": "18213726",
+    "nombres": "Julio Campos Florián",
+    "origen": "PUERTA",
+    "datos_extra": {
+      "Correo electrónico": "jcamposf@unitru.edu.pe"
+    }
   }
 ]

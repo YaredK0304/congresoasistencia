@@ -814,5 +814,13 @@
     "hora_salida": null,
     "minutos": 0,
     "nota": "Entrada registrada en puerta"
+  },
+  {
+    "dni": "18213726",
+    "fecha": "2026-11-16",
+    "hora_entrada": "09:48:00",
+    "hora_salida": null,
+    "minutos": 0,
+    "nota": "Entrada registrada en puerta"
   }
 ]

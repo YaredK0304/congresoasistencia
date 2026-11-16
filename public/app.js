@@ -379,9 +379,13 @@
 
       if (!data.ok) {
         if (data.codigo === 'NO_ENCONTRADO_PEDIR_NOMBRE') {
-          nuevoBox.classList.remove('hidden');
+          const dniNuevoEl = document.getElementById('input-dni-nuevo');
+          if (dniNuevoEl && dniEnviar) dniNuevoEl.value = dniEnviar;
+          inputNombresNuevo.classList.remove('hidden');
           inputNombresNuevo.focus();
-          showError(data.mensaje);
+          showError(
+            'Tu DNI no está en la lista previa. Completa tu Nombre y Correo en el recuadro de abajo ("¿Recién te vas a registrar?").'
+          );
         } else if (
           data.codigo === 'CONFIRMAR_SALIDA_RAPIDA' ||
           data.codigo === 'CONFIRMAR_REINGRESO_RAPIDO'
@@ -418,6 +422,84 @@
     } finally {
       btnSubmitMarca.disabled = false;
     }
+  }
+
+  const btnSubmitNuevo = document.getElementById('btn-submit-nuevo');
+  const inputDniNuevo = document.getElementById('input-dni-nuevo');
+  const errorNuevoBox = document.getElementById('error-nuevo-box');
+
+  function showErrorNuevo(msg) {
+    if (!errorNuevoBox) return;
+    if (!msg) {
+      errorNuevoBox.classList.add('hidden');
+      errorNuevoBox.textContent = '';
+      return;
+    }
+    errorNuevoBox.textContent = msg;
+    errorNuevoBox.classList.remove('hidden');
+  }
+
+  async function enviarNuevoAsistente() {
+    showErrorNuevo('');
+    const dniVal = (inputDniNuevo ? inputDniNuevo.value.trim() : '') || inputBusqueda.value.trim();
+    const nombresVal = inputNombresNuevo ? inputNombresNuevo.value.trim() : '';
+    const correoVal = inputCorreoNuevo ? inputCorreoNuevo.value.trim() : '';
+
+    if (!dniVal || dniVal.replace(/\D/g, '').length < 6) {
+      showErrorNuevo('Ingresa un número de DNI válido.');
+      if (inputDniNuevo) inputDniNuevo.focus();
+      return;
+    }
+    if (!nombresVal) {
+      showErrorNuevo('Ingresa tus Nombres y Apellidos completos.');
+      if (inputNombresNuevo) inputNombresNuevo.focus();
+      return;
+    }
+
+    if (btnSubmitNuevo) btnSubmitNuevo.disabled = true;
+    try {
+      const resp = await fetch('/api/marcar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dni: dniVal,
+          nombres: nombresVal,
+          correo: correoVal,
+          forzar: true,
+        }),
+      });
+      const data = await resp.json();
+      if (!data.ok) {
+        showErrorNuevo(data.mensaje || 'No se pudo completar el registro.');
+        return;
+      }
+
+      if (data.participante?.dni) {
+        localStorage.setItem('ultimo_dni_congreso', data.participante.dni);
+        if (data.tipo === 'ENTRADA') {
+          localStorage.setItem(
+            'sesion_activa_congreso',
+            JSON.stringify({
+              dni: data.participante.dni,
+              fecha: data.fecha,
+              hora_entrada: data.hora_marca,
+            })
+          );
+        }
+      }
+      if (inputDniNuevo) inputDniNuevo.value = '';
+      if (inputNombresNuevo) inputNombresNuevo.value = '';
+      if (inputCorreoNuevo) inputCorreoNuevo.value = '';
+      mostrarPaseConfirmacion(data);
+    } catch (_) {
+      showErrorNuevo('Error de conexión con el servidor.');
+    } finally {
+      if (btnSubmitNuevo) btnSubmitNuevo.disabled = false;
+    }
+  }
+
+  if (btnSubmitNuevo) {
+    btnSubmitNuevo.addEventListener('click', enviarNuevoAsistente);
   }
 
   btnSubmitMarca.addEventListener('click', () => enviarMarca(false));

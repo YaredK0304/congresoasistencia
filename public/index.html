@@ -88,27 +88,6 @@
           </button>
         </div>
 
-        <!-- SECCIÓN SIEMPRE VISIBLE PARA CORREO (CERTIFICADO) Y NUEVOS ASISTENTES -->
-        <div id="nuevo-participante-box" style="margin-top: 14px; padding: 14px; background: #eff6ff; border: 1px solid #93c5fd; border-radius: 12px;">
-          <div style="font-size: 0.84rem; font-weight: 700; color: #1e40af; margin-bottom: 8px;" id="nuevo-box-titulo">
-            📧 Correo para tu Certificado (y Nombre si no llenaste el Forms previo):
-          </div>
-          <input
-            type="email"
-            id="input-correo-nuevo"
-            class="input-lg"
-            placeholder="Correo electrónico (para enviarte el certificado)"
-            style="background: #ffffff; font-size: 0.96rem; padding: 12px; margin-bottom: 8px;"
-          />
-          <input
-            type="text"
-            id="input-nombres-nuevo"
-            class="input-lg"
-            placeholder="Nombres y Apellidos (solo si eres nuevo asistente)"
-            style="background: #ffffff; font-size: 0.96rem; padding: 12px;"
-          />
-        </div>
-
         <!-- TARJETA DE VISTA PREVIA DEL PARTICIPANTE -->
         <div id="preview-box" class="participant-preview hidden">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
@@ -155,6 +134,58 @@
         <div style="margin-top: 16px;">
           <button type="button" id="btn-submit-marca" class="btn btn-entrada btn-block">
             ✅ REGISTRAR ASISTENCIA
+          </button>
+        </div>
+      </div>
+
+      <!-- APARTADO INDEPENDIENTE PARA PERSONAS QUE RECIÉN SE VAN A REGISTRAR -->
+      <div class="card" id="nuevo-participante-box" style="border: 2px solid #93c5fd; background: #f8fafc;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+          <span style="font-size: 1.2rem;">➕</span>
+          <h2 style="font-size: 1.05rem; font-weight: 800; color: #1e3a8a;">
+            ¿Recién te vas a registrar? (Nuevo Asistente)
+          </h2>
+        </div>
+        <p style="font-size: 0.82rem; color: #475569; margin-bottom: 12px;">
+          Si no te inscribiste en el formulario previo, ingresa aquí tu DNI, nombre completo y correo para registrarte y marcar tu entrada automáticamente:
+        </p>
+
+        <div style="display: grid; gap: 10px;">
+          <div>
+            <label class="form-label" style="font-size: 0.82rem; margin-bottom: 4px;" for="input-dni-nuevo">DNI</label>
+            <input
+              type="text"
+              id="input-dni-nuevo"
+              class="input-lg"
+              placeholder="Ej: 72345678"
+              style="background: #ffffff; font-size: 0.96rem; padding: 11px 14px;"
+            />
+          </div>
+          <div>
+            <label class="form-label" style="font-size: 0.82rem; margin-bottom: 4px;" for="input-nombres-nuevo">Nombre Completo (Nombres y Apellidos)</label>
+            <input
+              type="text"
+              id="input-nombres-nuevo"
+              class="input-lg"
+              placeholder="Ej: Juan Carlos Pérez Gómez"
+              style="background: #ffffff; font-size: 0.96rem; padding: 11px 14px;"
+            />
+          </div>
+          <div>
+            <label class="form-label" style="font-size: 0.82rem; margin-bottom: 4px;" for="input-correo-nuevo">Correo Electrónico (para enviar el certificado)</label>
+            <input
+              type="email"
+              id="input-correo-nuevo"
+              class="input-lg"
+              placeholder="Ej: correo@unitru.edu.pe"
+              style="background: #ffffff; font-size: 0.96rem; padding: 11px 14px;"
+            />
+          </div>
+
+          <div id="error-nuevo-box" class="hidden" style="padding: 10px 12px; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; border-radius: 10px; font-size: 0.84rem; font-weight: 600;"></div>
+
+          <button type="button" id="btn-submit-nuevo" class="btn btn-primary btn-block" style="padding: 14px; font-size: 0.98rem;">
+            ➕ REGISTRARME Y MARCAR MI ENTRADA
           </button>
         </div>
       </div>
