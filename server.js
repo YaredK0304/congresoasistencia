@@ -368,7 +368,7 @@ const MIME_TYPES = {
   '.ico': 'image/x-icon',
 };
 
-const server = http.createServer(async (req, res) => {
+const requestHandler = async (req, res) => {
   try {
     const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     const pathname = parsedUrl.pathname;
@@ -724,21 +724,26 @@ const server = http.createServer(async (req, res) => {
       mensaje: err.message || 'Error interno del servidor',
     });
   }
-});
+};
 
-// Sincronización automática no bloqueante cada 60 segundos si hay un Google Sheet vinculado
-setInterval(() => {
-  triggerBackgroundSyncIfNeeded();
-}, 60000);
+const server = http.createServer(requestHandler);
 
-server.listen(PORT, '0.0.0.0', () => {
-  const ip = getLocalIPv4();
-  console.log('============================================================');
-  console.log('  SISTEMA DE ASISTENCIA Y HORAS ACUMULADAS - AUDITORIO');
-  console.log('============================================================');
-  console.log(`  Formulario Asistentes (QR):  http://${ip}:${PORT}`);
-  console.log(`  Login Administrador:         http://localhost:${PORT}/login`);
-  console.log(`  Panel Administrador:         http://localhost:${PORT}/admin`);
-  console.log('  Credenciales por defecto:    usuario: admin | clave: congreso2026');
-  console.log('============================================================');
-});
+if (!process.env.VERCEL) {
+  setInterval(() => {
+    triggerBackgroundSyncIfNeeded();
+  }, 60000);
+
+  server.listen(PORT, '0.0.0.0', () => {
+    const ip = getLocalIPv4();
+    console.log('============================================================');
+    console.log('  SISTEMA DE ASISTENCIA Y HORAS ACUMULADAS - AUDITORIO');
+    console.log('============================================================');
+    console.log(`  Formulario Asistentes (QR):  http://${ip}:${PORT}`);
+    console.log(`  Login Administrador:         http://localhost:${PORT}/login`);
+    console.log(`  Panel Administrador:         http://localhost:${PORT}/admin`);
+    console.log('  Credenciales por defecto:    usuario: admin | clave: congreso2026');
+    console.log('============================================================');
+  });
+}
+
+module.exports = requestHandler;

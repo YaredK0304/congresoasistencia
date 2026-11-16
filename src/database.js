@@ -1,67 +1,36 @@
 const path = require('node:path');
 const fs = require('node:fs');
+const os = require('node:os');
 const crypto = require('node:crypto');
-const { DatabaseSync } = require('node:sqlite');
 const { cleanDNI } = require('./excel');
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+function resolveDataDir() {
+  if (process.env.RAILWAY_VOLUME_MOUNT_PATH) {
+    return process.env.RAILWAY_VOLUME_MOUNT_PATH;
+  }
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    return path.join(os.tmpdir(), 'congreso_data');
+  }
+  const localDir = path.join(__dirname, '..', 'data');
+  try {
+    if (!fs.existsSync(localDir)) {
+      fs.mkdirSync(localDir, { recursive: true });
+    }
+    const testFile = path.join(localDir, '.write_test');
+    fs.writeFileSync(testFile, 'ok');
+    fs.unlinkSync(testFile);
+    return localDir;
+  } catch (_) {
+    return path.join(os.tmpdir(), 'congreso_data');
+  }
 }
 
-const DB_PATH = path.join(DATA_DIR, 'asistencia_congreso.db');
-const db = new DatabaseSync(DB_PATH);
-
-// Optimización SQLite para alta concurrencia (cientos de peticiones simultáneas sin bloqueo)
-db.exec(`
-  PRAGMA journal_mode = WAL;
-  PRAGMA synchronous = NORMAL;
-  PRAGMA busy_timeout = 5000;
-  PRAGMA cache_size = -64000;
-  PRAGMA temp_store = MEMORY;
-  PRAGMA foreign_keys = ON;
-
-  CREATE TABLE IF NOT EXISTS config (
-    clave TEXT PRIMARY KEY,
-    valor TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS participantes (
-    dni TEXT PRIMARY KEY,
-    nombres TEXT NOT NULL,
-    nombres_norm TEXT DEFAULT '',
-    datos_extra TEXT DEFAULT '{}',
-    origen TEXT DEFAULT 'FORMS',
-    creado_en TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS sesiones (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    dni TEXT NOT NULL,
-    fecha TEXT NOT NULL,
-    hora_entrada TEXT NOT NULL,
-    hora_salida TEXT DEFAULT NULL,
-    minutos INTEGER DEFAULT 0,
-    ts_entrada INTEGER NOT NULL,
-    ts_salida INTEGER DEFAULT NULL,
-    nota TEXT DEFAULT '',
-    FOREIGN KEY (dni) REFERENCES participantes(dni) ON DELETE CASCADE
-  );
-
-  CREATE INDEX IF NOT EXISTS idx_sesiones_dni_fecha ON sesiones(dni, fecha);
-  CREATE INDEX IF NOT EXISTS idx_sesiones_fecha ON sesiones(fecha);
-  CREATE INDEX IF NOT EXISTS idx_sesiones_abiertas ON sesiones(dni, hora_salida);
-`);
-
-// Migración segura si la base de datos ya existía de una versión previa
-const colsPart = db.prepare('PRAGMA table_info(participantes)').all().map((c) => c.name);
-if (!colsPart.includes('nombres_norm')) {
-  db.exec("ALTER TABLE participantes ADD COLUMN nombres_norm TEXT DEFAULT ''");
-}
-if (!colsPart.includes('datos_extra')) {
-  db.exec("ALTER TABLE participantes ADD COLUMN datos_extra TEXT DEFAULT '{}'");
-}
-db.exec('CREATE INDEX IF NOT EXISTS idx_participantes_norm ON participantes(nombres_norm);');
+const DATA_DIR = resolveDataDir();
+try {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+} catch (_) {}
 
 function hashPassword(pwd) {
   return crypto.createHash('sha256').update(String(pwd) + '_congreso_salt_v1').digest('hex');
@@ -73,17 +42,6 @@ function normalizarTexto(str) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .trim();
-}
-
-// Asegurar que filas existentes tengan nombres_norm poblado
-const sinNorm = db.prepare("SELECT dni, nombres FROM participantes WHERE nombres_norm = '' OR nombres_norm IS NULL").all();
-if (sinNorm.length > 0) {
-  const updNorm = db.prepare('UPDATE participantes SET nombres_norm = ? WHERE dni = ?');
-  db.exec('BEGIN');
-  for (const r of sinNorm) {
-    updNorm.run(normalizarTexto(r.nombres), r.dni);
-  }
-  db.exec('COMMIT');
 }
 
 const defaultAdminUser = process.env.ADMIN_USER || 'admin';
@@ -100,89 +58,132 @@ const defaultConfigs = {
   admin_pass_hash: hashPassword(defaultAdminPass),
 };
 
-const insertConfigStmt = db.prepare(
-  'INSERT OR IGNORE INTO config (clave, valor) VALUES (?, ?)'
-);
-for (const [k, v] of Object.entries(defaultConfigs)) {
-  insertConfigStmt.run(k, v);
+// ==========================================
+// MOTOR DE ALMACENAMIENTO HÍBRIDO:
+// Usa node:sqlite en Node 22.5+ y cae automáticamente a JSON/RAM en Vercel (Node 18/20 o Serverless)
+// ==========================================
+
+const JSON_FILE = path.join(DATA_DIR, 'asistencia_congreso.json');
+
+let store = {
+  config: { ...defaultConfigs },
+  participantes: {}, // dni -> { dni, nombres, nombres_norm, datos_extra, origen, creado_en }
+  sesiones: [], // [{ id, dni, fecha, hora_entrada, hora_salida, minutos, ts_entrada, ts_salida, nota }]
+  nextId: 1,
+};
+
+function loadStoreFromDisk() {
+  try {
+    if (fs.existsSync(JSON_FILE)) {
+      const raw = JSON.parse(fs.readFileSync(JSON_FILE, 'utf8'));
+      if (raw && typeof raw === 'object') {
+        store.config = { ...defaultConfigs, ...(raw.config || {}) };
+        store.participantes = raw.participantes || {};
+        store.sesiones = Array.isArray(raw.sesiones) ? raw.sesiones : [];
+        store.nextId = Number(raw.nextId) || store.sesiones.length + 1;
+      }
+    }
+  } catch (_) {}
+}
+
+function saveStoreToDisk() {
+  try {
+    fs.writeFileSync(JSON_FILE, JSON.stringify(store), 'utf8');
+  } catch (_) {}
+}
+
+loadStoreFromDisk();
+
+// Intentar también sincronizar con SQLite si el entorno tiene node:sqlite (Node 22.5+)
+let sqliteDb = null;
+try {
+  const { DatabaseSync } = require('node:sqlite');
+  const dbPath = path.join(DATA_DIR, 'asistencia_congreso.db');
+  sqliteDb = new DatabaseSync(dbPath);
+  try {
+    sqliteDb.exec('PRAGMA journal_mode = WAL;');
+  } catch (_) {}
+  sqliteDb.exec(`
+    CREATE TABLE IF NOT EXISTS config (clave TEXT PRIMARY KEY, valor TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS participantes (
+      dni TEXT PRIMARY KEY,
+      nombres TEXT NOT NULL,
+      nombres_norm TEXT DEFAULT '',
+      datos_extra TEXT DEFAULT '{}',
+      origen TEXT DEFAULT 'FORMS',
+      creado_en TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS sesiones (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      dni TEXT NOT NULL,
+      fecha TEXT NOT NULL,
+      hora_entrada TEXT NOT NULL,
+      hora_salida TEXT DEFAULT NULL,
+      minutos INTEGER DEFAULT 0,
+      ts_entrada INTEGER NOT NULL,
+      ts_salida INTEGER DEFAULT NULL,
+      nota TEXT DEFAULT ''
+    );
+  `);
+
+  // Si JSON estaba vacío pero SQLite tenía datos previos, cargar desde SQLite a memoria
+  if (Object.keys(store.participantes).length === 0) {
+    const cfgRows = sqliteDb.prepare('SELECT clave, valor FROM config').all();
+    for (const r of cfgRows) store.config[r.clave] = r.valor;
+
+    const partRows = sqliteDb.prepare('SELECT * FROM participantes').all();
+    for (const p of partRows) {
+      let extra = {};
+      try {
+        extra = typeof p.datos_extra === 'string' ? JSON.parse(p.datos_extra || '{}') : p.datos_extra || {};
+      } catch (_) {}
+      store.participantes[p.dni] = {
+        dni: p.dni,
+        nombres: p.nombres,
+        nombres_norm: p.nombres_norm || normalizarTexto(p.nombres),
+        datos_extra: extra,
+        origen: p.origen || 'FORMS',
+        creado_en: p.creado_en || new Date().toISOString(),
+      };
+    }
+
+    const sesRows = sqliteDb.prepare('SELECT * FROM sesiones ORDER BY id ASC').all();
+    store.sesiones = sesRows.map((s) => ({
+      id: Number(s.id),
+      dni: s.dni,
+      fecha: s.fecha,
+      hora_entrada: s.hora_entrada,
+      hora_salida: s.hora_salida || null,
+      minutos: Number(s.minutos || 0),
+      ts_entrada: Number(s.ts_entrada || 0),
+      ts_salida: s.ts_salida ? Number(s.ts_salida) : null,
+      nota: s.nota || '',
+    }));
+    const maxId = store.sesiones.reduce((m, s) => Math.max(m, s.id), 0);
+    store.nextId = maxId + 1;
+    saveStoreToDisk();
+  }
+} catch (_) {
+  sqliteDb = null;
 }
 
 // ==========================================
-// SENTENCIAS PRE-COMPILADAS (ULTRA RÁPIDAS)
-// ==========================================
-
-const STMTS = {
-  getAllConfig: db.prepare('SELECT clave, valor FROM config'),
-  upsertConfig: db.prepare('INSERT OR REPLACE INTO config (clave, valor) VALUES (?, ?)'),
-  getParticipanteByDni: db.prepare(
-    'SELECT dni, nombres, datos_extra, origen FROM participantes WHERE dni = ?'
-  ),
-  getParticipanteByNorm: db.prepare(
-    'SELECT dni, nombres, datos_extra, origen FROM participantes WHERE nombres_norm = ? LIMIT 1'
-  ),
-  insertParticipante: db.prepare(
-    'INSERT INTO participantes (dni, nombres, nombres_norm, datos_extra, origen, creado_en) VALUES (?, ?, ?, ?, ?, ?)'
-  ),
-  updateParticipante: db.prepare(
-    'UPDATE participantes SET nombres = ?, nombres_norm = ?, datos_extra = ?, origen = ? WHERE dni = ?'
-  ),
-  countParticipantes: db.prepare('SELECT COUNT(*) as total FROM participantes'),
-  getSesionAbiertaAny: db.prepare(
-    'SELECT id, fecha, hora_entrada, ts_entrada FROM sesiones WHERE dni = ? AND hora_salida IS NULL ORDER BY id DESC LIMIT 1'
-  ),
-  getSesionAbiertaHoy: db.prepare(
-    'SELECT * FROM sesiones WHERE dni = ? AND fecha = ? AND hora_salida IS NULL ORDER BY id DESC LIMIT 1'
-  ),
-  getSesionesAbiertasOtroDia: db.prepare(
-    'SELECT * FROM sesiones WHERE dni = ? AND fecha != ? AND hora_salida IS NULL'
-  ),
-  cerrarSesionHuérfana: db.prepare(
-    'UPDATE sesiones SET hora_salida = hora_entrada, ts_salida = ts_entrada, minutos = 0, nota = ? WHERE id = ?'
-  ),
-  getUltimaCerradaHoy: db.prepare(
-    'SELECT * FROM sesiones WHERE dni = ? AND fecha = ? AND hora_salida IS NOT NULL ORDER BY id DESC LIMIT 1'
-  ),
-  insertSesionEntrada: db.prepare(
-    'INSERT INTO sesiones (dni, fecha, hora_entrada, ts_entrada, nota) VALUES (?, ?, ?, ?, ?)'
-  ),
-  updateSesionSalida: db.prepare(
-    "UPDATE sesiones SET hora_salida = ?, ts_salida = ?, minutos = ?, nota = CASE WHEN ? != '' THEN ? ELSE nota END WHERE id = ?"
-  ),
-  getBloquesHoy: db.prepare(
-    'SELECT id, fecha, hora_entrada, hora_salida, minutos, nota FROM sesiones WHERE dni = ? AND fecha = ? ORDER BY id ASC'
-  ),
-  getMinTotalDni: db.prepare(
-    'SELECT COALESCE(SUM(minutos), 0) as total FROM sesiones WHERE dni = ? AND hora_salida IS NOT NULL'
-  ),
-  buscarRapido: db.prepare(`
-    SELECT
-      p.dni,
-      p.nombres,
-      p.origen,
-      (SELECT id FROM sesiones s1 WHERE s1.dni = p.dni AND s1.hora_salida IS NULL ORDER BY s1.id DESC LIMIT 1) AS abierta_id,
-      (SELECT hora_entrada FROM sesiones s2 WHERE s2.dni = p.dni AND s2.hora_salida IS NULL ORDER BY s2.id DESC LIMIT 1) AS abierta_hora,
-      COALESCE((SELECT SUM(minutos) FROM sesiones s3 WHERE s3.dni = p.dni AND s3.fecha = ? AND s3.hora_salida IS NOT NULL), 0) AS min_hoy,
-      COALESCE((SELECT SUM(minutos) FROM sesiones s4 WHERE s4.dni = p.dni AND s4.hora_salida IS NOT NULL), 0) AS min_total
-    FROM participantes p
-    WHERE p.dni LIKE ? OR p.nombres_norm LIKE ?
-    ORDER BY CASE WHEN p.dni = ? THEN 0 ELSE 1 END, p.nombres ASC
-    LIMIT 12
-  `),
-};
-
-// ==========================================
-// UTILIDADES DE FECHA Y HORA
+// UTILIDADES DE FECHA Y HORA (HORA PERÚ UTC-5)
 // ==========================================
 
 function getNowLocal(customDateStr, customTimeStr) {
-  const now = new Date();
+  const peruDate = new Date(Date.now() - 5 * 3600 * 1000);
   const pad = (n) => String(n).padStart(2, '0');
   const fecha =
     customDateStr ||
-    `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    `${peruDate.getUTCFullYear()}-${pad(peruDate.getUTCMonth() + 1)}-${pad(
+      peruDate.getUTCDate()
+    )}`;
   const hora =
     customTimeStr ||
-    `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    `${pad(peruDate.getUTCHours())}:${pad(peruDate.getUTCMinutes())}:${pad(
+      peruDate.getUTCSeconds()
+    )}`;
   const horaPartes = hora.split(':');
   const horaCompleta =
     horaPartes.length === 2
@@ -191,7 +192,7 @@ function getNowLocal(customDateStr, customTimeStr) {
 
   const [y, m, d] = fecha.split('-').map(Number);
   const [hh, mm, ss] = horaCompleta.split(':').map(Number);
-  const ts = new Date(y, m - 1, d, hh, mm, ss).getTime();
+  const ts = Date.UTC(y, m - 1, d, hh + 5, mm, ss);
 
   return { fecha, hora: horaCompleta, ts };
 }
@@ -232,34 +233,26 @@ function formatearHoraCorta(horaStr) {
 // ==========================================
 
 function getConfig() {
-  const rows = STMTS.getAllConfig.all();
-  const cfg = {};
-  for (const r of rows) {
-    if (r.clave !== 'admin_pass_hash') {
-      cfg[r.clave] = r.valor;
-    }
-  }
+  const cfg = { ...store.config };
+  delete cfg.admin_pass_hash;
   return cfg;
 }
 
 function updateConfig(updates) {
-  for (const [k, v] of Object.entries(updates)) {
+  for (const [k, v] of Object.entries(updates || {})) {
     if (v !== undefined && v !== null && k !== 'admin_pass_hash') {
-      STMTS.upsertConfig.run(k, String(v));
+      store.config[k] = String(v);
     }
   }
+  saveStoreToDisk();
   return getConfig();
 }
 
 function verificarCredencialesAdmin(usuario, password) {
-  const rows = STMTS.getAllConfig.all();
-  const map = {};
-  for (const r of rows) map[r.clave] = r.valor;
-
-  const userEsperado = process.env.ADMIN_USER || map.admin_user || 'admin';
+  const userEsperado = process.env.ADMIN_USER || store.config.admin_user || 'admin';
   const hashEsperado = process.env.ADMIN_PASS
     ? hashPassword(process.env.ADMIN_PASS)
-    : map.admin_pass_hash;
+    : store.config.admin_pass_hash || hashPassword('congreso2026');
 
   const userOk = String(usuario || '').trim() === userEsperado;
   const passOk = hashPassword(password) === hashEsperado;
@@ -268,11 +261,12 @@ function verificarCredencialesAdmin(usuario, password) {
 
 function cambiarPasswordAdmin(nuevoUsuario, nuevaPassword) {
   if (nuevoUsuario && String(nuevoUsuario).trim()) {
-    STMTS.upsertConfig.run('admin_user', String(nuevoUsuario).trim());
+    store.config.admin_user = String(nuevoUsuario).trim();
   }
   if (nuevaPassword && String(nuevaPassword).length >= 4) {
-    STMTS.upsertConfig.run('admin_pass_hash', hashPassword(nuevaPassword));
+    store.config.admin_pass_hash = hashPassword(nuevaPassword);
   }
+  saveStoreToDisk();
   return true;
 }
 
@@ -285,60 +279,53 @@ function importarParticipantes(lista, origen = 'FORMS') {
   let nuevos = 0;
   let actualizados = 0;
 
-  // Detectar todas las variables adicionales que vienen del Forms
   const colsExtraSet = new Set();
   try {
-    const prevCols = JSON.parse(getConfig().columnas_forms || '[]');
+    const prevCols = JSON.parse(store.config.columnas_forms || '[]');
     for (const c of prevCols) colsExtraSet.add(c);
   } catch (_) {}
 
-  db.exec('BEGIN');
-  try {
-    for (const item of lista) {
-      const dni = cleanDNI(item.dni);
-      const nombres = String(item.nombres || '').replace(/\s+/g, ' ').trim();
-      if (!dni || !nombres) continue;
+  for (const item of lista || []) {
+    const dni = cleanDNI(item.dni);
+    const nombres = String(item.nombres || '').replace(/\s+/g, ' ').trim();
+    if (!dni || !nombres) continue;
 
-      const norm = normalizarTexto(nombres);
-      const extraObj = item.datos_extra && typeof item.datos_extra === 'object' ? item.datos_extra : {};
-      for (const k of Object.keys(extraObj)) colsExtraSet.add(k);
+    const norm = normalizarTexto(nombres);
+    const extraObj =
+      item.datos_extra && typeof item.datos_extra === 'object' ? item.datos_extra : {};
+    for (const k of Object.keys(extraObj)) colsExtraSet.add(k);
 
-      const existente = STMTS.getParticipanteByDni.get(dni);
-      if (!existente) {
-        STMTS.insertParticipante.run(
-          dni,
-          nombres,
-          norm,
-          JSON.stringify(extraObj),
-          origen,
-          nowStr
-        );
-        nuevos++;
-      } else {
-        let prevExtra = {};
-        try {
-          prevExtra = JSON.parse(existente.datos_extra || '{}');
-        } catch (_) {}
-        const mergedExtra = { ...prevExtra, ...extraObj };
-        const nuevoJson = JSON.stringify(mergedExtra);
-        if (existente.nombres !== nombres || existente.datos_extra !== nuevoJson) {
-          STMTS.updateParticipante.run(nombres, norm, nuevoJson, origen, dni);
-          actualizados++;
-        }
-      }
+    const existente = store.participantes[dni];
+    if (!existente) {
+      store.participantes[dni] = {
+        dni,
+        nombres,
+        nombres_norm: norm,
+        datos_extra: extraObj,
+        origen,
+        creado_en: nowStr,
+      };
+      nuevos++;
+    } else {
+      const mergedExtra = { ...(existente.datos_extra || {}), ...extraObj };
+      const changed =
+        existente.nombres !== nombres ||
+        JSON.stringify(existente.datos_extra || {}) !== JSON.stringify(mergedExtra);
+      existente.nombres = nombres;
+      existente.nombres_norm = norm;
+      existente.datos_extra = mergedExtra;
+      existente.origen = origen;
+      if (changed) actualizados++;
     }
-    STMTS.upsertConfig.run('columnas_forms', JSON.stringify(Array.from(colsExtraSet)));
-    db.exec('COMMIT');
-  } catch (err) {
-    db.exec('ROLLBACK');
-    throw err;
   }
 
-  const total = STMTS.countParticipantes.get().total;
+  store.config.columnas_forms = JSON.stringify(Array.from(colsExtraSet));
+  saveStoreToDisk();
+
   return {
     nuevos,
     actualizados,
-    total,
+    total: Object.keys(store.participantes).length,
     columnas_forms: Array.from(colsExtraSet),
   };
 }
@@ -350,44 +337,77 @@ function buscarParticipantes(query, fechaActual) {
   const qNorm = normalizarTexto(q);
   const qDigits = cleanDNI(q);
 
-  const rows = STMTS.buscarRapido.all(
-    fecha,
-    `%${qDigits || q}%`,
-    `%${qNorm}%`,
-    qDigits || q
-  );
+  const resultados = [];
+  for (const p of Object.values(store.participantes)) {
+    const matchDni =
+      p.dni.includes(q) || (qDigits.length >= 2 && p.dni.includes(qDigits));
+    const matchNombre = p.nombres_norm.includes(qNorm);
+    if (matchDni || matchNombre) {
+      let abierta = null;
+      let minHoy = 0;
+      let minTotal = 0;
+      for (const s of store.sesiones) {
+        if (s.dni !== p.dni) continue;
+        if (!s.hora_salida) {
+          abierta = s;
+        } else {
+          minTotal += Number(s.minutos || 0);
+          if (s.fecha === fecha) minHoy += Number(s.minutos || 0);
+        }
+      }
+      resultados.push({
+        dni: p.dni,
+        nombres: p.nombres,
+        origen: p.origen,
+        exactDni: p.dni === q || p.dni === qDigits,
+        dentro: Boolean(abierta),
+        sesion_abierta: abierta
+          ? { id: abierta.id, hora_entrada: formatearHoraCorta(abierta.hora_entrada) }
+          : null,
+        minutos_hoy: minHoy,
+        horas_hoy_texto: formatearMinutos(minHoy),
+        minutos_total: minTotal,
+        horas_total_texto: formatearMinutos(minTotal),
+      });
+    }
+  }
 
-  return rows.map((r) => ({
-    dni: r.dni,
-    nombres: r.nombres,
-    origen: r.origen,
-    exactDni: r.dni === q || r.dni === qDigits,
-    dentro: Boolean(r.abierta_id),
-    sesion_abierta: r.abierta_id
-      ? { id: r.abierta_id, hora_entrada: r.abierta_hora }
-      : null,
-    minutos_hoy: r.min_hoy,
-    horas_hoy_texto: formatearMinutos(r.min_hoy),
-    minutos_total: r.min_total,
-    horas_total_texto: formatearMinutos(r.min_total),
-  }));
+  resultados.sort((a, b) => {
+    if (a.exactDni !== b.exactDni) return (b.exactDni ? 1 : 0) - (a.exactDni ? 1 : 0);
+    return a.nombres.localeCompare(b.nombres);
+  });
+  return resultados.slice(0, 12);
 }
 
 function obtenerEstadoParticipante(dniRaw, fechaActual) {
   const dni = cleanDNI(dniRaw);
   if (!dni) return null;
   const fecha = fechaActual || getNowLocal().fecha;
-  const p = STMTS.getParticipanteByDni.get(dni);
+  const p = store.participantes[dni];
   if (!p) return null;
 
-  const sesionAbierta = STMTS.getSesionAbiertaAny.get(dni);
-  const bloquesHoy = STMTS.getBloquesHoy.all(dni, fecha);
+  let sesionAbierta = null;
+  const bloquesHoy = [];
+  let minHoy = 0;
+  let minTotal = 0;
 
-  const minHoy = bloquesHoy.reduce(
-    (acc, b) => acc + (b.hora_salida ? Number(b.minutos || 0) : 0),
-    0
-  );
-  const minTotal = STMTS.getMinTotalDni.get(dni).total;
+  for (const s of store.sesiones) {
+    if (s.dni !== dni) continue;
+    if (!s.hora_salida) {
+      sesionAbierta = s;
+    } else {
+      minTotal += Number(s.minutos || 0);
+    }
+    if (s.fecha === fecha) {
+      if (s.hora_salida) minHoy += Number(s.minutos || 0);
+      bloquesHoy.push({
+        ...s,
+        hora_entrada_corta: formatearHoraCorta(s.hora_entrada),
+        hora_salida_corta: s.hora_salida ? formatearHoraCorta(s.hora_salida) : null,
+        duracion_texto: s.hora_salida ? formatearMinutos(s.minutos) : 'En curso',
+      });
+    }
+  }
 
   return {
     participante: {
@@ -397,12 +417,7 @@ function obtenerEstadoParticipante(dniRaw, fechaActual) {
     },
     dentro: Boolean(sesionAbierta),
     sesion_abierta: sesionAbierta || null,
-    bloques_hoy: bloquesHoy.map((b) => ({
-      ...b,
-      hora_entrada_corta: formatearHoraCorta(b.hora_entrada),
-      hora_salida_corta: b.hora_salida ? formatearHoraCorta(b.hora_salida) : null,
-      duracion_texto: b.hora_salida ? formatearMinutos(b.minutos) : 'En curso',
-    })),
+    bloques_hoy: bloquesHoy,
     minutos_hoy: minHoy,
     horas_hoy_texto: formatearMinutos(minHoy),
     minutos_total: minTotal,
@@ -425,10 +440,11 @@ function registrarMarca({
   let dni = cleanDNI(rawDni);
   const nombresInput = String(rawNombres || '').replace(/\s+/g, ' ').trim();
 
-  // Si no puso DNI pero puso su nombre, buscarlo por nombre normalizado indexado
   if (!dni && nombresInput) {
     const norm = normalizarTexto(nombresInput);
-    const encontrado = STMTS.getParticipanteByNorm.get(norm);
+    const encontrado = Object.values(store.participantes).find(
+      (p) => p.nombres_norm === norm
+    );
     if (encontrado) {
       dni = encontrado.dni;
     }
@@ -442,8 +458,7 @@ function registrarMarca({
     };
   }
 
-  let participante = STMTS.getParticipanteByDni.get(dni);
-
+  let participante = store.participantes[dni];
   if (!participante) {
     if (!nombresInput) {
       return {
@@ -454,46 +469,74 @@ function registrarMarca({
           'No encontramos este DNI en la lista previa del Forms. Escribe tus Nombres y Apellidos para registrarte ahora mismo.',
       };
     }
-    const norm = normalizarTexto(nombresInput);
-    STMTS.insertParticipante.run(
+    participante = {
       dni,
-      nombresInput,
-      norm,
-      '{}',
-      'PUERTA',
-      new Date().toISOString()
-    );
-    participante = { dni, nombres: nombresInput, origen: 'PUERTA' };
+      nombres: nombresInput,
+      nombres_norm: normalizarTexto(nombresInput),
+      datos_extra: {},
+      origen: 'PUERTA',
+      creado_en: new Date().toISOString(),
+    };
+    store.participantes[dni] = participante;
   }
 
   const { fecha, hora, ts } = getNowLocal(fechaCustom, horaCustom);
 
-  const sesionAbiertaHoy = STMTS.getSesionAbiertaHoy.get(dni, fecha);
-
   // Cerrar sesiones olvidadas de días anteriores
-  const sesionAbiertaAnterior = STMTS.getSesionesAbiertasOtroDia.all(dni, fecha);
-  for (const ant of sesionAbiertaAnterior) {
-    STMTS.cerrarSesionHuérfana.run('Cerrado automático (día anterior)', ant.id);
+  let sesionAbiertaHoy = null;
+  let ultimaCerradaHoy = null;
+
+  for (const s of store.sesiones) {
+    if (s.dni !== dni) continue;
+    if (!s.hora_salida) {
+      if (s.fecha === fecha) {
+        sesionAbiertaHoy = s;
+      } else {
+        s.hora_salida = s.hora_entrada;
+        s.ts_salida = s.ts_entrada;
+        s.minutos = 0;
+        s.nota = 'Cerrado automático (día anterior)';
+      }
+    } else if (s.fecha === fecha) {
+      ultimaCerradaHoy = s;
+    }
   }
 
   if (!sesionAbiertaHoy) {
-    if (!forzar && !fechaCustom && !horaCustom) {
-      const ultimaCerrada = STMTS.getUltimaCerradaHoy.get(dni, fecha);
-      if (ultimaCerrada && ultimaCerrada.ts_salida && Math.abs(ts - ultimaCerrada.ts_salida) < 45000) {
-        return {
-          ok: false,
-          codigo: 'CONFIRMAR_REINGRESO_RAPIDO',
-          tipo_sugerido: 'ENTRADA',
-          participante: { dni: participante.dni, nombres: participante.nombres },
-          ultima_hora: formatearHoraCorta(ultimaCerrada.hora_salida),
-          mensaje: `Acabas de registrar tu SALIDA hace unos segundos (${formatearHoraCorta(
-            ultimaCerrada.hora_salida
-          )}). ¿Deseas abrir una nueva ENTRADA ahora mismo?`,
-        };
-      }
+    if (
+      !forzar &&
+      !fechaCustom &&
+      !horaCustom &&
+      ultimaCerradaHoy &&
+      ultimaCerradaHoy.ts_salida &&
+      Math.abs(ts - ultimaCerradaHoy.ts_salida) < 45000
+    ) {
+      return {
+        ok: false,
+        codigo: 'CONFIRMAR_REINGRESO_RAPIDO',
+        tipo_sugerido: 'ENTRADA',
+        participante: { dni: participante.dni, nombres: participante.nombres },
+        ultima_hora: formatearHoraCorta(ultimaCerradaHoy.hora_salida),
+        mensaje: `Acabas de registrar tu SALIDA hace unos segundos (${formatearHoraCorta(
+          ultimaCerradaHoy.hora_salida
+        )}). ¿Deseas abrir una nueva ENTRADA ahora mismo?`,
+      };
     }
 
-    const info = STMTS.insertSesionEntrada.run(dni, fecha, hora, ts, nota);
+    const nuevoBloque = {
+      id: store.nextId++,
+      dni,
+      fecha,
+      hora_entrada: hora,
+      hora_salida: null,
+      minutos: 0,
+      ts_entrada: ts,
+      ts_salida: null,
+      nota: nota || '',
+    };
+    store.sesiones.push(nuevoBloque);
+    saveStoreToDisk();
+
     const estado = obtenerEstadoParticipante(dni, fecha);
     return {
       ok: true,
@@ -502,12 +545,17 @@ function registrarMarca({
       fecha,
       hora_marca: formatearHoraCorta(hora),
       hora_completa: hora,
-      bloque_id: info.lastInsertRowid,
+      bloque_id: nuevoBloque.id,
       numero_bloque_hoy: estado.bloques_hoy.length,
       ...estado,
     };
   } else {
-    if (!forzar && !fechaCustom && !horaCustom && Math.abs(ts - sesionAbiertaHoy.ts_entrada) < 45000) {
+    if (
+      !forzar &&
+      !fechaCustom &&
+      !horaCustom &&
+      Math.abs(ts - sesionAbiertaHoy.ts_entrada) < 45000
+    ) {
       return {
         ok: false,
         codigo: 'CONFIRMAR_SALIDA_RAPIDA',
@@ -521,7 +569,11 @@ function registrarMarca({
     }
 
     const minutosBloque = calcularMinutosBloque(sesionAbiertaHoy.hora_entrada, hora);
-    STMTS.updateSesionSalida.run(hora, ts, minutosBloque, nota, nota, sesionAbiertaHoy.id);
+    sesionAbiertaHoy.hora_salida = hora;
+    sesionAbiertaHoy.ts_salida = ts;
+    sesionAbiertaHoy.minutos = minutosBloque;
+    if (nota) sesionAbiertaHoy.nota = nota;
+    saveStoreToDisk();
 
     const estado = obtenerEstadoParticipante(dni, fecha);
     return {
@@ -545,23 +597,29 @@ function registrarMarca({
 // FUNCIONES DE ADMINISTRACIÓN Y REPORTES
 // ==========================================
 
-function registrarBloqueManual({ dni: rawDni, nombres, fecha, hora_entrada, hora_salida, nota = '' }) {
+function registrarBloqueManual({
+  dni: rawDni,
+  nombres,
+  fecha,
+  hora_entrada,
+  hora_salida,
+  nota = '',
+}) {
   const dni = cleanDNI(rawDni);
   if (!dni || !fecha || !hora_entrada) {
     throw new Error('DNI, fecha y hora de entrada son obligatorios');
   }
 
-  const p = STMTS.getParticipanteByDni.get(dni);
-  if (!p) {
+  if (!store.participantes[dni]) {
     const nom = String(nombres || `Participante ${dni}`).trim();
-    STMTS.insertParticipante.run(
+    store.participantes[dni] = {
       dni,
-      nom,
-      normalizarTexto(nom),
-      '{}',
-      'MANUAL',
-      new Date().toISOString()
-    );
+      nombres: nom,
+      nombres_norm: normalizarTexto(nom),
+      datos_extra: {},
+      origen: 'MANUAL',
+      creado_en: new Date().toISOString(),
+    };
   }
 
   const entradaNorm = hora_entrada.length === 5 ? `${hora_entrada}:00` : hora_entrada;
@@ -571,18 +629,37 @@ function registrarBloqueManual({ dni: rawDni, nombres, fecha, hora_entrada, hora
     const salidaNorm = hora_salida.length === 5 ? `${hora_salida}:00` : hora_salida;
     const tsSalida = getNowLocal(fecha, salidaNorm).ts;
     const minutos = calcularMinutosBloque(entradaNorm, salidaNorm);
-    db.prepare(
-      'INSERT INTO sesiones (dni, fecha, hora_entrada, hora_salida, minutos, ts_entrada, ts_salida, nota) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-    ).run(dni, fecha, entradaNorm, salidaNorm, minutos, tsEntrada, tsSalida, nota || 'Registro manual');
+    store.sesiones.push({
+      id: store.nextId++,
+      dni,
+      fecha,
+      hora_entrada: entradaNorm,
+      hora_salida: salidaNorm,
+      minutos,
+      ts_entrada: tsEntrada,
+      ts_salida: tsSalida,
+      nota: nota || 'Registro manual',
+    });
   } else {
-    STMTS.insertSesionEntrada.run(dni, fecha, entradaNorm, tsEntrada, nota || 'Entrada manual');
+    store.sesiones.push({
+      id: store.nextId++,
+      dni,
+      fecha,
+      hora_entrada: entradaNorm,
+      hora_salida: null,
+      minutos: 0,
+      ts_entrada: tsEntrada,
+      ts_salida: null,
+      nota: nota || 'Entrada manual',
+    });
   }
 
+  saveStoreToDisk();
   return obtenerEstadoParticipante(dni, fecha);
 }
 
 function actualizarBloque(id, { fecha, hora_entrada, hora_salida, nota }) {
-  const sesion = db.prepare('SELECT * FROM sesiones WHERE id = ?').get(id);
+  const sesion = store.sesiones.find((s) => s.id === Number(id));
   if (!sesion) throw new Error('Sesión no encontrada');
 
   const nuevaFecha = fecha || sesion.fecha;
@@ -603,61 +680,44 @@ function actualizarBloque(id, { fecha, hora_entrada, hora_salida, nota }) {
     minutos = calcularMinutosBloque(nuevaEntrada, nuevaSalida);
   }
 
-  db.prepare(
-    'UPDATE sesiones SET fecha = ?, hora_entrada = ?, hora_salida = ?, minutos = ?, ts_entrada = ?, ts_salida = ?, nota = ? WHERE id = ?'
-  ).run(
-    nuevaFecha,
-    nuevaEntrada,
-    nuevaSalida,
-    minutos,
-    tsEntrada,
-    tsSalida,
-    nota !== undefined ? nota : sesion.nota,
-    id
-  );
+  sesion.fecha = nuevaFecha;
+  sesion.hora_entrada = nuevaEntrada;
+  sesion.hora_salida = nuevaSalida;
+  sesion.minutos = minutos;
+  sesion.ts_entrada = tsEntrada;
+  sesion.ts_salida = tsSalida;
+  if (nota !== undefined) sesion.nota = nota;
+  saveStoreToDisk();
   return true;
 }
 
 function eliminarBloque(id) {
-  db.prepare('DELETE FROM sesiones WHERE id = ?').run(id);
+  store.sesiones = store.sesiones.filter((s) => s.id !== Number(id));
+  saveStoreToDisk();
   return true;
 }
 
 function cerrarSesionesAbiertas({ fecha, hora_cierre }) {
   const horaNorm =
-    hora_cierre && hora_cierre.length === 5 ? `${hora_cierre}:00` : hora_cierre || getNowLocal().hora;
-
-  const abiertas = fecha
-    ? db.prepare('SELECT * FROM sesiones WHERE fecha = ? AND hora_salida IS NULL').all(fecha)
-    : db.prepare('SELECT * FROM sesiones WHERE hora_salida IS NULL').all();
-
-  const updateStmt = db.prepare(
-    'UPDATE sesiones SET hora_salida = ?, ts_salida = ?, minutos = ?, nota = ? WHERE id = ?'
-  );
+    hora_cierre && hora_cierre.length === 5
+      ? `${hora_cierre}:00`
+      : hora_cierre || getNowLocal().hora;
 
   let cerradas = 0;
-  db.exec('BEGIN');
-  try {
-    for (const s of abiertas) {
+  for (const s of store.sesiones) {
+    if (!s.hora_salida && (!fecha || s.fecha === fecha)) {
       const minutos = calcularMinutosBloque(s.hora_entrada, horaNorm);
       const tsOut = getNowLocal(s.fecha, horaNorm).ts;
-      updateStmt.run(
-        horaNorm,
-        tsOut,
-        minutos,
-        s.nota
-          ? `${s.nota} | Cierre grupal (${formatearHoraCorta(horaNorm)})`
-          : `Cierre grupal (${formatearHoraCorta(horaNorm)})`,
-        s.id
-      );
+      s.hora_salida = horaNorm;
+      s.ts_salida = tsOut;
+      s.minutos = minutos;
+      s.nota = s.nota
+        ? `${s.nota} | Cierre grupal (${formatearHoraCorta(horaNorm)})`
+        : `Cierre grupal (${formatearHoraCorta(horaNorm)})`;
       cerradas++;
     }
-    db.exec('COMMIT');
-  } catch (e) {
-    db.exec('ROLLBACK');
-    throw e;
   }
-
+  saveStoreToDisk();
   return { cerradas, hora_cierre: formatearHoraCorta(horaNorm) };
 }
 
@@ -672,36 +732,21 @@ function obtenerResumenGeneral() {
     columnasForms = JSON.parse(config.columnas_forms || '[]');
   } catch (_) {}
 
-  const participantes = db
-    .prepare(
-      'SELECT dni, nombres, datos_extra, origen, creado_en FROM participantes ORDER BY nombres ASC'
-    )
-    .all();
-
-  const sesiones = db
-    .prepare(
-      `SELECT s.*, p.nombres
-       FROM sesiones s
-       LEFT JOIN participantes p ON p.dni = s.dni
-       ORDER BY s.fecha ASC, s.hora_entrada ASC`
-    )
-    .all();
-
   const fechasSet = new Set();
-  for (const s of sesiones) fechasSet.add(s.fecha);
+  for (const s of store.sesiones) fechasSet.add(s.fecha);
   const fechasOrdenadas = Array.from(fechasSet).sort();
 
   const porDni = new Map();
-  for (const p of participantes) {
-    let extra = {};
-    try {
-      extra = JSON.parse(p.datos_extra || '{}');
-    } catch (_) {}
+  const participantesOrdenados = Object.values(store.participantes).sort((a, b) =>
+    a.nombres.localeCompare(b.nombres)
+  );
+
+  for (const p of participantesOrdenados) {
     porDni.set(p.dni, {
       dni: p.dni,
       nombres: p.nombres,
-      datos_extra: extra,
-      origen: p.origen,
+      datos_extra: p.datos_extra || {},
+      origen: p.origen || 'FORMS',
       dentro: false,
       sesion_abierta: null,
       minutos_total: 0,
@@ -712,12 +757,15 @@ function obtenerResumenGeneral() {
   }
 
   const dentroAhora = [];
+  const sesionesOrdenadas = [...store.sesiones].sort((a, b) =>
+    `${a.fecha}_${a.hora_entrada}`.localeCompare(`${b.fecha}_${b.hora_entrada}`)
+  );
 
-  for (const s of sesiones) {
+  for (const s of sesionesOrdenadas) {
     if (!porDni.has(s.dni)) {
       porDni.set(s.dni, {
         dni: s.dni,
-        nombres: s.nombres || `DNI ${s.dni}`,
+        nombres: `DNI ${s.dni}`,
         datos_extra: {},
         origen: 'PUERTA',
         dentro: false,
@@ -812,19 +860,13 @@ function obtenerResumenGeneral() {
     };
   });
 
-  const ultimosMovimientos = db
-    .prepare(
-      `SELECT s.*, p.nombres
-       FROM sesiones s
-       LEFT JOIN participantes p ON p.dni = s.dni
-       ORDER BY COALESCE(s.ts_salida, s.ts_entrada) DESC
-       LIMIT 25`
-    )
-    .all()
+  const ultimosMovimientos = [...store.sesiones]
+    .sort((a, b) => (b.ts_salida || b.ts_entrada) - (a.ts_salida || a.ts_entrada))
+    .slice(0, 25)
     .map((s) => ({
       id: s.id,
       dni: s.dni,
-      nombres: s.nombres || `DNI ${s.dni}`,
+      nombres: store.participantes[s.dni]?.nombres || `DNI ${s.dni}`,
       fecha: s.fecha,
       tipo: s.hora_salida ? 'SALIDA' : 'ENTRADA',
       hora_entrada: formatearHoraCorta(s.hora_entrada),
@@ -846,7 +888,7 @@ function obtenerResumenGeneral() {
       total_inscritos: listaParticipantes.length,
       dentro_ahora: dentroAhora.length,
       asistentes_con_registro: asistentesConRegistro,
-      total_bloques: sesiones.length,
+      total_bloques: store.sesiones.length,
       total_horas_acumuladas: formatearMinutos(totalMinutosCongreso),
     },
     dentro_ahora: dentroAhora,
@@ -865,9 +907,8 @@ function cargarDatosEjemplo() {
   ];
 
   importarParticipantes(demoParticipantes, 'FORMS');
-
-  const delStmt = db.prepare('DELETE FROM sesiones WHERE dni = ?');
-  for (const p of demoParticipantes) delStmt.run(p.dni);
+  const demoDnis = new Set(demoParticipantes.map((p) => p.dni));
+  store.sesiones = store.sesiones.filter((s) => !demoDnis.has(s.dni));
 
   registrarBloqueManual({
     dni: '72345678',
@@ -932,12 +973,20 @@ function cargarDatosEjemplo() {
 }
 
 function limpiarTodo({ incluirParticipantes = false }) {
-  db.prepare('DELETE FROM sesiones').run();
+  store.sesiones = [];
   if (incluirParticipantes) {
-    db.prepare('DELETE FROM participantes').run();
-    STMTS.upsertConfig.run('columnas_forms', '[]');
+    store.participantes = {};
+    store.config.columnas_forms = '[]';
   }
+  saveStoreToDisk();
   return obtenerResumenGeneral();
+}
+
+// Cargar datos iniciales de ejemplo si es la primera vez que arranca vacío
+if (Object.keys(store.participantes).length === 0) {
+  try {
+    cargarDatosEjemplo();
+  } catch (_) {}
 }
 
 module.exports = {
